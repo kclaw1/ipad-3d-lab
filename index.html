@@ -1,151 +1,679 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My 3D Lab 🪩</title>
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+  <title>3D Playground 🪩</title>
 
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     html, body {
       margin: 0;
       width: 100%;
       height: 100%;
       overflow: hidden;
       background: #111;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    #app {
+      width: 100%;
+      height: 100%;
+    }
+
+    canvas {
+      display: block;
+      touch-action: none;
+    }
+
+    /* Controls */
+
+    #controls {
+      position: fixed;
+      left: 16px;
+      right: 16px;
+      bottom: 16px;
+
+      padding: 16px;
+
+      background: rgba(20, 20, 25, 0.78);
+      backdrop-filter: blur(18px);
+
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 20px;
+
+      color: white;
+
+      z-index: 10;
+    }
+
+    .row {
+      margin-bottom: 14px;
+    }
+
+    .row:last-child {
+      margin-bottom: 0;
+    }
+
+    label {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      font-size: 14px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+    }
+
+    .geometry-buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 10px 5px;
+
+      background: rgba(255,255,255,0.1);
+      color: white;
+
+      font-size: 13px;
+    }
+
+    button:active {
+      transform: scale(0.96);
+      background: rgba(255,255,255,0.2);
+    }
+
+    #colorButton {
+      width: 100%;
+      padding: 12px;
+      font-size: 15px;
+    }
+
+    .hint {
+      text-align: center;
+      opacity: 0.5;
+      font-size: 11px;
+      margin-top: 10px;
     }
   </style>
 </head>
 
 <body>
 
+<div id="app"></div>
+
+<div id="controls">
+
+  <!-- ROUGHNESS -->
+
+  <div class="row">
+
+    <label>
+      <span>Roughness</span>
+      <span id="roughnessValue">0.25</span>
+    </label>
+
+    <input
+      id="roughness"
+      type="range"
+      min="0"
+      max="1"
+      step="0.01"
+      value="0.25"
+    >
+
+  </div>
+
+
+  <!-- METALNESS -->
+
+  <div class="row">
+
+    <label>
+      <span>Metalness</span>
+      <span id="metalnessValue">0.35</span>
+    </label>
+
+    <input
+      id="metalness"
+      type="range"
+      min="0"
+      max="1"
+      step="0.01"
+      value="0.35"
+    >
+
+  </div>
+
+
+  <!-- COLOR -->
+
+  <div class="row">
+
+    <button id="colorButton">
+      🎨 Change Color
+    </button>
+
+  </div>
+
+
+  <!-- GEOMETRY -->
+
+  <div class="row">
+
+    <label>
+      <span>Geometry</span>
+    </label>
+
+    <div class="geometry-buttons">
+
+      <button data-geometry="cube">
+        Cube
+      </button>
+
+      <button data-geometry="sphere">
+        Sphere
+      </button>
+
+      <button data-geometry="torus">
+        Torus
+      </button>
+
+      <button data-geometry="ico">
+        Crystal
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <div class="hint">
+    👆 Drag the object to rotate
+  </div>
+
+</div>
+
+
 <script type="module">
 
   import * as THREE from
     "https://cdn.jsdelivr.net/npm/three@0.179.1/build/three.module.js";
 
-  // 1. SCENE
+
+  // ============================================================
+  // SCENE
+  // ============================================================
+
   const scene = new THREE.Scene();
 
-  // 2. CAMERA
+  scene.background = new THREE.Color(0x111111);
+
+
+  // ============================================================
+  // CAMERA
+  // ============================================================
+
   const camera = new THREE.PerspectiveCamera(
-    75,
+    45,
     window.innerWidth / window.innerHeight,
     0.1,
     100
   );
 
-  camera.position.z = 3;
+  camera.position.z = 4;
 
-  // 3. RENDERER
+
+  // ============================================================
+  // RENDERER
+  // ============================================================
+
   const renderer = new THREE.WebGLRenderer({
     antialias: true
   });
+
+  renderer.setPixelRatio(
+    Math.min(window.devicePixelRatio, 2)
+  );
 
   renderer.setSize(
     window.innerWidth,
     window.innerHeight
   );
 
-  document.body.appendChild(renderer.domElement);
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
 
-  // 4. CUBE / Geometry
-  
-  // const geometry = new THREE.BoxGeometry();
-  // const geometry = new THREE.SphereGeometry(1, 64, 64);
-  const geometry = new THREE.IcosahedronGeometry(
-  1,
-  4
-  );
+  document
+    .getElementById("app")
+    .appendChild(renderer.domElement);
 
-  //const material = new THREE.MeshStandardMaterial({
-  // color: 0x8b5cf6,
-  // metalness: 0.35,
-  // roughness: 0.25
-  //});
 
-  const material = new THREE.MeshStandardMaterial({
-  color: 0x66ddff,
-  metalness: 0.1,
-  roughness: 0.7
-  });
-
-  const cube = new THREE.Mesh(
-    geometry,
-    material
-  );
-
-  scene.add(cube);
+  // ============================================================
   // LIGHTS
+  // ============================================================
 
-const ambientLight = new THREE.AmbientLight(
-  0xffffff,
-  1.5
-);
+  const ambientLight =
+    new THREE.AmbientLight(
+      0xffffff,
+      1.5
+    );
 
-scene.add(ambientLight);
-
-
-const keyLight = new THREE.DirectionalLight(
-  0xffffff,
-  3
-);
-
-keyLight.position.set(
-  2,
-  3,
-  4
-);
-
-scene.add(keyLight);
-
-  // 5. ANIMATION
-  // TOUCH CONTROL
-
-let isDragging = false;
-let previousX = 0;
-let previousY = 0;
-
-renderer.domElement.addEventListener("pointerdown", (event) => {
-  isDragging = true;
-
-  previousX = event.clientX;
-  previousY = event.clientY;
-});
-
-renderer.domElement.addEventListener("pointermove", (event) => {
-
-  if (!isDragging) return;
-
-  const deltaX = event.clientX - previousX;
-  const deltaY = event.clientY - previousY;
-
-  cube.rotation.y += deltaX * 0.01;
-  cube.rotation.x += deltaY * 0.01;
-
-  previousX = event.clientX;
-  previousY = event.clientY;
-});
-
-renderer.domElement.addEventListener("pointerup", () => {
-  isDragging = false;
-});
-
-renderer.domElement.addEventListener("pointercancel", () => {
-  isDragging = false;
-});
+  scene.add(ambientLight);
 
 
-// ANIMATION
+  const keyLight =
+    new THREE.DirectionalLight(
+      0xffffff,
+      4
+    );
 
-function animate() {
-
-  renderer.render(
-    scene,
-    camera
+  keyLight.position.set(
+    3,
+    4,
+    5
   );
 
-}
+  scene.add(keyLight);
 
-renderer.setAnimationLoop(animate);
+
+  const fillLight =
+    new THREE.DirectionalLight(
+      0x6688ff,
+      2
+    );
+
+  fillLight.position.set(
+    -4,
+    -2,
+    3
+  );
+
+  scene.add(fillLight);
+
+
+  // ============================================================
+  // MATERIAL
+  // ============================================================
+
+  let material =
+    new THREE.MeshStandardMaterial({
+
+      color: 0xff66cc,
+
+      metalness: 0.35,
+
+      roughness: 0.25
+
+    });
+
+
+  // ============================================================
+  // GEOMETRY
+  // ============================================================
+
+  let geometry =
+    new THREE.BoxGeometry(
+      1.6,
+      1.6,
+      1.6
+    );
+
+
+  // ============================================================
+  // OBJECT
+  // ============================================================
+
+  let object =
+    new THREE.Mesh(
+      geometry,
+      material
+    );
+
+  scene.add(object);
+
+
+  // ============================================================
+  // GEOMETRY FACTORY
+  // ============================================================
+
+  function createGeometry(type) {
+
+    switch (type) {
+
+      case "cube":
+
+        return new THREE.BoxGeometry(
+          1.6,
+          1.6,
+          1.6
+        );
+
+
+      case "sphere":
+
+        return new THREE.SphereGeometry(
+          1.1,
+          64,
+          64
+        );
+
+
+      case "torus":
+
+        return new THREE.TorusGeometry(
+          1,
+          0.35,
+          32,
+          100
+        );
+
+
+      case "ico":
+
+        return new THREE.IcosahedronGeometry(
+          1.25,
+          4
+        );
+
+
+      default:
+
+        return new THREE.BoxGeometry(
+          1.6,
+          1.6,
+          1.6
+        );
+
+    }
+
+  }
+
+
+  // ============================================================
+  // CHANGE GEOMETRY
+  // ============================================================
+
+  function changeGeometry(type) {
+
+    const newGeometry =
+      createGeometry(type);
+
+
+    object.geometry.dispose();
+
+    object.geometry =
+      newGeometry;
+
+  }
+
+
+  // ============================================================
+  // ROUGHNESS SLIDER
+  // ============================================================
+
+  const roughnessSlider =
+    document.getElementById(
+      "roughness"
+    );
+
+  const roughnessValue =
+    document.getElementById(
+      "roughnessValue"
+    );
+
+
+  roughnessSlider.addEventListener(
+    "input",
+    () => {
+
+      const value =
+        Number(
+          roughnessSlider.value
+        );
+
+      material.roughness =
+        value;
+
+      roughnessValue.textContent =
+        value.toFixed(2);
+
+    }
+  );
+
+
+  // ============================================================
+  // METALNESS SLIDER
+  // ============================================================
+
+  const metalnessSlider =
+    document.getElementById(
+      "metalness"
+    );
+
+  const metalnessValue =
+    document.getElementById(
+      "metalnessValue"
+    );
+
+
+  metalnessSlider.addEventListener(
+    "input",
+    () => {
+
+      const value =
+        Number(
+          metalnessSlider.value
+        );
+
+      material.metalness =
+        value;
+
+      metalnessValue.textContent =
+        value.toFixed(2);
+
+    }
+  );
+
+
+  // ============================================================
+  // COLOR
+  // ============================================================
+
+  const colors = [
+
+    0xff66cc,
+
+    0x66ddff,
+
+    0x9966ff,
+
+    0xffcc66,
+
+    0x66ff99,
+
+    0xff6677,
+
+    0xffffff
+
+  ];
+
+
+  let colorIndex = 0;
+
+
+  document
+    .getElementById("colorButton")
+    .addEventListener(
+      "click",
+      () => {
+
+        colorIndex =
+          (colorIndex + 1)
+          % colors.length;
+
+        material.color.setHex(
+          colors[colorIndex]
+        );
+
+      }
+    );
+
+
+  // ============================================================
+  // GEOMETRY BUTTONS
+  // ============================================================
+
+  document
+    .querySelectorAll(
+      "[data-geometry]"
+    )
+    .forEach(
+      button => {
+
+        button.addEventListener(
+          "click",
+          () => {
+
+            changeGeometry(
+              button.dataset.geometry
+            );
+
+          }
+        );
+
+      }
+    );
+
+
+  // ============================================================
+  // TOUCH / POINTER ROTATION
+  // ============================================================
+
+  let isDragging = false;
+
+  let previousX = 0;
+
+  let previousY = 0;
+
+
+  renderer.domElement.addEventListener(
+    "pointerdown",
+    event => {
+
+      isDragging = true;
+
+      previousX =
+        event.clientX;
+
+      previousY =
+        event.clientY;
+
+    }
+  );
+
+
+  renderer.domElement.addEventListener(
+    "pointermove",
+    event => {
+
+      if (!isDragging) return;
+
+
+      const deltaX =
+        event.clientX -
+        previousX;
+
+      const deltaY =
+        event.clientY -
+        previousY;
+
+
+      object.rotation.y +=
+        deltaX * 0.01;
+
+      object.rotation.x +=
+        deltaY * 0.01;
+
+
+      previousX =
+        event.clientX;
+
+      previousY =
+        event.clientY;
+
+    }
+  );
+
+
+  renderer.domElement.addEventListener(
+    "pointerup",
+    () => {
+
+      isDragging = false;
+
+    }
+  );
+
+
+  renderer.domElement.addEventListener(
+    "pointercancel",
+    () => {
+
+      isDragging = false;
+
+    }
+  );
+
+
+  // ============================================================
+  // RESIZE
+  // ============================================================
+
+  window.addEventListener(
+    "resize",
+    () => {
+
+      camera.aspect =
+        window.innerWidth /
+        window.innerHeight;
+
+      camera.updateProjectionMatrix();
+
+      renderer.setSize(
+        window.innerWidth,
+        window.innerHeight
+      );
+
+    }
+  );
+
+
+  // ============================================================
+  // ANIMATION
+  // ============================================================
+
+  function animate() {
+
+    renderer.render(
+      scene,
+      camera
+    );
+
+  }
+
+
+  renderer.setAnimationLoop(
+    animate
+  );
 
 </script>
 
