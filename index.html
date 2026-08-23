@@ -60,19 +60,54 @@
   scene.add(cube);
 
   // 5. ANIMATION
-  function animate() {
+  // TOUCH CONTROL
 
-    cube.rotation.x += 0.01;
-    cube.rotation.y += 0.01;
+let isDragging = false;
+let previousX = 0;
+let previousY = 0;
 
-    renderer.render(
-      scene,
-      camera
-    );
+renderer.domElement.addEventListener("pointerdown", (event) => {
+  isDragging = true;
 
-  }
+  previousX = event.clientX;
+  previousY = event.clientY;
+});
 
-  renderer.setAnimationLoop(animate);
+renderer.domElement.addEventListener("pointermove", (event) => {
+
+  if (!isDragging) return;
+
+  const deltaX = event.clientX - previousX;
+  const deltaY = event.clientY - previousY;
+
+  cube.rotation.y += deltaX * 0.01;
+  cube.rotation.x += deltaY * 0.01;
+
+  previousX = event.clientX;
+  previousY = event.clientY;
+});
+
+renderer.domElement.addEventListener("pointerup", () => {
+  isDragging = false;
+});
+
+renderer.domElement.addEventListener("pointercancel", () => {
+  isDragging = false;
+});
+
+
+// ANIMATION
+
+function animate() {
+
+  renderer.render(
+    scene,
+    camera
+  );
+
+}
+
+renderer.setAnimationLoop(animate);
 
 </script>
 
