@@ -4,7 +4,7 @@
   <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-  <title>3D Playground 🪩</title>
+  <title>3D Blob Lab 🫧</title>
 
   <style>
     * {
@@ -16,7 +16,7 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background: #111;
+      background: #09090d;
       font-family: -apple-system, BlinkMacSystemFont, sans-serif;
     }
 
@@ -30,29 +30,26 @@
       touch-action: none;
     }
 
-    /* Controls */
-
     #controls {
       position: fixed;
-      left: 16px;
-      right: 16px;
-      bottom: 16px;
+      left: 14px;
+      right: 14px;
+      bottom: 14px;
 
-      padding: 16px;
+      padding: 15px;
 
-      background: rgba(20, 20, 25, 0.78);
-      backdrop-filter: blur(18px);
+      background: rgba(20, 20, 28, 0.78);
+      backdrop-filter: blur(20px);
 
       border: 1px solid rgba(255,255,255,0.12);
       border-radius: 20px;
 
       color: white;
-
       z-index: 10;
     }
 
     .row {
-      margin-bottom: 14px;
+      margin-bottom: 13px;
     }
 
     .row:last-child {
@@ -63,39 +60,33 @@
       display: flex;
       justify-content: space-between;
       margin-bottom: 6px;
-      font-size: 14px;
+      font-size: 13px;
     }
 
     input[type="range"] {
       width: 100%;
     }
 
-    .geometry-buttons {
+    .buttons {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
+      gap: 7px;
     }
 
     button {
       border: 0;
-      border-radius: 12px;
-      padding: 10px 5px;
+      border-radius: 11px;
+      padding: 10px 4px;
 
       background: rgba(255,255,255,0.1);
       color: white;
 
-      font-size: 13px;
+      font-size: 12px;
     }
 
     button:active {
       transform: scale(0.96);
-      background: rgba(255,255,255,0.2);
-    }
-
-    #colorButton {
-      width: 100%;
-      padding: 12px;
-      font-size: 15px;
+      background: rgba(255,255,255,0.22);
     }
 
     .hint {
@@ -155,6 +146,27 @@
   </div>
 
 
+  <!-- BLOBINESS -->
+
+  <div class="row">
+
+    <label>
+      <span>Blobiness 🫠</span>
+      <span id="blobValue">0.25</span>
+    </label>
+
+    <input
+      id="blobiness"
+      type="range"
+      min="0"
+      max="1"
+      step="0.01"
+      value="0.25"
+    >
+
+  </div>
+
+
   <!-- COLOR -->
 
   <div class="row">
@@ -171,25 +183,25 @@
   <div class="row">
 
     <label>
-      <span>Geometry</span>
+      <span>Shape</span>
     </label>
 
-    <div class="geometry-buttons">
+    <div class="buttons">
 
-      <button data-geometry="cube">
+      <button data-shape="cube">
         Cube
       </button>
 
-      <button data-geometry="sphere">
+      <button data-shape="sphere">
         Sphere
       </button>
 
-      <button data-geometry="torus">
+      <button data-shape="torus">
         Torus
       </button>
 
-      <button data-geometry="ico">
-        Crystal
+      <button data-shape="blob">
+        🫧 Blob
       </button>
 
     </div>
@@ -198,7 +210,7 @@
 
 
   <div class="hint">
-    👆 Drag the object to rotate
+    👆 Drag = rotate &nbsp; • &nbsp; 🤏 Pinch = zoom
   </div>
 
 </div>
@@ -206,370 +218,559 @@
 
 <script type="module">
 
-  import * as THREE from
-    "https://cdn.jsdelivr.net/npm/three@0.179.1/build/three.module.js";
+import * as THREE from
+"https://cdn.jsdelivr.net/npm/three@0.179.1/build/three.module.js";
 
 
-  // ============================================================
-  // SCENE
-  // ============================================================
+// ============================================================
+// SCENE
+// ============================================================
 
-  const scene = new THREE.Scene();
+const scene =
+  new THREE.Scene();
 
-  scene.background = new THREE.Color(0x111111);
+scene.background =
+  new THREE.Color(0x09090d);
 
 
-  // ============================================================
-  // CAMERA
-  // ============================================================
+// ============================================================
+// CAMERA
+// ============================================================
 
-  const camera = new THREE.PerspectiveCamera(
+const camera =
+  new THREE.PerspectiveCamera(
     45,
-    window.innerWidth / window.innerHeight,
+    window.innerWidth /
+    window.innerHeight,
     0.1,
     100
   );
 
-  camera.position.z = 4;
+camera.position.z = 4;
 
 
-  // ============================================================
-  // RENDERER
-  // ============================================================
+// ============================================================
+// RENDERER
+// ============================================================
 
-  const renderer = new THREE.WebGLRenderer({
+const renderer =
+  new THREE.WebGLRenderer({
     antialias: true
   });
 
-  renderer.setPixelRatio(
-    Math.min(window.devicePixelRatio, 2)
+renderer.setPixelRatio(
+  Math.min(
+    window.devicePixelRatio,
+    2
+  )
+);
+
+renderer.setSize(
+  window.innerWidth,
+  window.innerHeight
+);
+
+renderer.outputColorSpace =
+  THREE.SRGBColorSpace;
+
+renderer.domElement.style.touchAction =
+  "none";
+
+document
+  .getElementById("app")
+  .appendChild(
+    renderer.domElement
   );
 
-  renderer.setSize(
-    window.innerWidth,
-    window.innerHeight
+
+// ============================================================
+// LIGHTING
+// ============================================================
+
+const ambientLight =
+  new THREE.AmbientLight(
+    0xffffff,
+    1.5
   );
 
-  renderer.outputColorSpace = THREE.SRGBColorSpace;
-
-  document
-    .getElementById("app")
-    .appendChild(renderer.domElement);
+scene.add(
+  ambientLight
+);
 
 
-  // ============================================================
-  // LIGHTS
-  // ============================================================
-
-  const ambientLight =
-    new THREE.AmbientLight(
-      0xffffff,
-      1.5
-    );
-
-  scene.add(ambientLight);
-
-
-  const keyLight =
-    new THREE.DirectionalLight(
-      0xffffff,
-      4
-    );
-
-  keyLight.position.set(
-    3,
-    4,
-    5
+const keyLight =
+  new THREE.DirectionalLight(
+    0xffffff,
+    4
   );
 
-  scene.add(keyLight);
+keyLight.position.set(
+  3,
+  4,
+  5
+);
+
+scene.add(
+  keyLight
+);
 
 
-  const fillLight =
-    new THREE.DirectionalLight(
-      0x6688ff,
-      2
-    );
-
-  fillLight.position.set(
-    -4,
-    -2,
-    3
+const fillLight =
+  new THREE.DirectionalLight(
+    0x6688ff,
+    2
   );
 
-  scene.add(fillLight);
+fillLight.position.set(
+  -4,
+  -2,
+  3
+);
+
+scene.add(
+  fillLight
+);
 
 
-  // ============================================================
-  // MATERIAL
-  // ============================================================
+// ============================================================
+// MATERIAL
+// ============================================================
 
-  let material =
-    new THREE.MeshStandardMaterial({
+const material =
+  new THREE.MeshStandardMaterial({
 
-      color: 0xff66cc,
+    color: 0xff66cc,
 
-      metalness: 0.35,
+    metalness: 0.35,
 
-      roughness: 0.25
+    roughness: 0.25
 
-    });
+  });
 
 
-  // ============================================================
-  // GEOMETRY
-  // ============================================================
+// ============================================================
+// BLOB GEOMETRY
+// ============================================================
 
-  let geometry =
-    new THREE.BoxGeometry(
-      1.6,
-      1.6,
-      1.6
+function createBlob() {
+
+  const geometry =
+    new THREE.SphereGeometry(
+      1.1,
+      96,
+      96
     );
 
+  const position =
+    geometry.attributes.position;
 
-  // ============================================================
-  // OBJECT
-  // ============================================================
 
-  let object =
-    new THREE.Mesh(
-      geometry,
-      material
+  // Save original vertices
+
+  const original =
+    position.array.slice();
+
+
+  geometry.userData.original =
+    original;
+
+
+  return geometry;
+
+}
+
+
+// ============================================================
+// GEOMETRY CREATOR
+// ============================================================
+
+function createGeometry(
+  type
+) {
+
+  switch (type) {
+
+    case "cube":
+
+      return new THREE.BoxGeometry(
+        1.6,
+        1.6,
+        1.6
+      );
+
+
+    case "sphere":
+
+      return new THREE.SphereGeometry(
+        1.1,
+        64,
+        64
+      );
+
+
+    case "torus":
+
+      return new THREE.TorusGeometry(
+        1,
+        0.35,
+        32,
+        100
+      );
+
+
+    case "blob":
+
+      return createBlob();
+
+  }
+
+}
+
+
+// ============================================================
+// OBJECT
+// ============================================================
+
+let currentShape =
+  "blob";
+
+let geometry =
+  createGeometry(
+    currentShape
+  );
+
+let object =
+  new THREE.Mesh(
+    geometry,
+    material
+  );
+
+scene.add(
+  object
+);
+
+
+// ============================================================
+// BLOB SETTINGS
+// ============================================================
+
+let blobiness =
+  0.25;
+
+let time = 0;
+
+
+// ============================================================
+// DEFORM BLOB
+// ============================================================
+
+function deformBlob() {
+
+  if (
+    currentShape !== "blob"
+  ) return;
+
+
+  const position =
+    object.geometry
+      .attributes
+      .position;
+
+  const original =
+    object.geometry
+      .userData
+      .original;
+
+
+  for (
+    let i = 0;
+    i < position.count;
+    i++
+  ) {
+
+    const x =
+      original[i * 3];
+
+    const y =
+      original[i * 3 + 1];
+
+    const z =
+      original[i * 3 + 2];
+
+
+    // Distance from center
+
+    const length =
+      Math.sqrt(
+        x*x +
+        y*y +
+        z*z
+      );
+
+
+    // Normalized direction
+
+    const nx =
+      x / length;
+
+    const ny =
+      y / length;
+
+    const nz =
+      z / length;
+
+
+    // Organic noise
+
+    const wave =
+      Math.sin(
+        x * 3 +
+        time
+      )
+      *
+      Math.cos(
+        y * 2.5 +
+        time * 0.7
+      )
+      *
+      Math.sin(
+        z * 2 +
+        time * 0.5
+      );
+
+
+    const amount =
+      1 +
+      wave *
+      blobiness *
+      0.35;
+
+
+    position.setXYZ(
+      i,
+
+      nx * length * amount,
+
+      ny * length * amount,
+
+      nz * length * amount
+
     );
-
-  scene.add(object);
-
-
-  // ============================================================
-  // GEOMETRY FACTORY
-  // ============================================================
-
-  function createGeometry(type) {
-
-    switch (type) {
-
-      case "cube":
-
-        return new THREE.BoxGeometry(
-          1.6,
-          1.6,
-          1.6
-        );
-
-
-      case "sphere":
-
-        return new THREE.SphereGeometry(
-          1.1,
-          64,
-          64
-        );
-
-
-      case "torus":
-
-        return new THREE.TorusGeometry(
-          1,
-          0.35,
-          32,
-          100
-        );
-
-
-      case "ico":
-
-        return new THREE.IcosahedronGeometry(
-          1.25,
-          4
-        );
-
-
-      default:
-
-        return new THREE.BoxGeometry(
-          1.6,
-          1.6,
-          1.6
-        );
-
-    }
 
   }
 
 
-  // ============================================================
-  // CHANGE GEOMETRY
-  // ============================================================
+  position.needsUpdate =
+    true;
 
-  function changeGeometry(type) {
+  object.geometry
+    .computeVertexNormals();
 
-    const newGeometry =
-      createGeometry(type);
+}
 
 
-    object.geometry.dispose();
+// ============================================================
+// ROUGHNESS
+// ============================================================
 
-    object.geometry =
-      newGeometry;
+const roughnessSlider =
+  document.getElementById(
+    "roughness"
+  );
+
+const roughnessValue =
+  document.getElementById(
+    "roughnessValue"
+  );
+
+
+roughnessSlider.addEventListener(
+  "input",
+  () => {
+
+    const value =
+      Number(
+        roughnessSlider.value
+      );
+
+    material.roughness =
+      value;
+
+    roughnessValue.textContent =
+      value.toFixed(2);
 
   }
+);
 
 
-  // ============================================================
-  // ROUGHNESS SLIDER
-  // ============================================================
+// ============================================================
+// METALNESS
+// ============================================================
 
-  const roughnessSlider =
-    document.getElementById(
-      "roughness"
-    );
+const metalnessSlider =
+  document.getElementById(
+    "metalness"
+  );
 
-  const roughnessValue =
-    document.getElementById(
-      "roughnessValue"
-    );
+const metalnessValue =
+  document.getElementById(
+    "metalnessValue"
+  );
 
 
-  roughnessSlider.addEventListener(
-    "input",
+metalnessSlider.addEventListener(
+  "input",
+  () => {
+
+    const value =
+      Number(
+        metalnessSlider.value
+      );
+
+    material.metalness =
+      value;
+
+    metalnessValue.textContent =
+      value.toFixed(2);
+
+  }
+);
+
+
+// ============================================================
+// BLOBINESS
+// ============================================================
+
+const blobSlider =
+  document.getElementById(
+    "blobiness"
+  );
+
+const blobValue =
+  document.getElementById(
+    "blobValue"
+  );
+
+
+blobSlider.addEventListener(
+  "input",
+  () => {
+
+    blobiness =
+      Number(
+        blobSlider.value
+      );
+
+    blobValue.textContent =
+      blobiness.toFixed(2);
+
+  }
+);
+
+
+// ============================================================
+// COLORS
+// ============================================================
+
+const colors = [
+
+  0xff66cc,
+  0x66ddff,
+  0x9966ff,
+  0xffcc66,
+  0x66ff99,
+  0xff6677,
+  0xffffff
+
+];
+
+let colorIndex = 0;
+
+
+document
+  .getElementById(
+    "colorButton"
+  )
+  .addEventListener(
+    "click",
     () => {
 
-      const value =
-        Number(
-          roughnessSlider.value
-        );
+      colorIndex =
+        (
+          colorIndex + 1
+        )
+        %
+        colors.length;
 
-      material.roughness =
-        value;
-
-      roughnessValue.textContent =
-        value.toFixed(2);
+      material.color.setHex(
+        colors[colorIndex]
+      );
 
     }
   );
 
 
-  // ============================================================
-  // METALNESS SLIDER
-  // ============================================================
+// ============================================================
+// SHAPE BUTTONS
+// ============================================================
 
-  const metalnessSlider =
-    document.getElementById(
-      "metalness"
-    );
+document
+  .querySelectorAll(
+    "[data-shape]"
+  )
+  .forEach(
+    button => {
 
-  const metalnessValue =
-    document.getElementById(
-      "metalnessValue"
-    );
+      button.addEventListener(
+        "click",
+        () => {
 
-
-  metalnessSlider.addEventListener(
-    "input",
-    () => {
-
-      const value =
-        Number(
-          metalnessSlider.value
-        );
-
-      material.metalness =
-        value;
-
-      metalnessValue.textContent =
-        value.toFixed(2);
-
-    }
-  );
+          const type =
+            button.dataset.shape;
 
 
-  // ============================================================
-  // COLOR
-  // ============================================================
-
-  const colors = [
-
-    0xff66cc,
-
-    0x66ddff,
-
-    0x9966ff,
-
-    0xffcc66,
-
-    0x66ff99,
-
-    0xff6677,
-
-    0xffffff
-
-  ];
-
-
-  let colorIndex = 0;
-
-
-  document
-    .getElementById("colorButton")
-    .addEventListener(
-      "click",
-      () => {
-
-        colorIndex =
-          (colorIndex + 1)
-          % colors.length;
-
-        material.color.setHex(
-          colors[colorIndex]
-        );
-
-      }
-    );
-
-
-  // ============================================================
-  // GEOMETRY BUTTONS
-  // ============================================================
-
-  document
-    .querySelectorAll(
-      "[data-geometry]"
-    )
-    .forEach(
-      button => {
-
-        button.addEventListener(
-          "click",
-          () => {
-
-            changeGeometry(
-              button.dataset.geometry
+          const newGeometry =
+            createGeometry(
+              type
             );
 
-          }
-        );
 
-      }
-    );
+          object.geometry
+            .dispose();
 
 
-  // ============================================================
-  // TOUCH / POINTER ROTATION
-  // ============================================================
-
-  let isDragging = false;
-
-  let previousX = 0;
-
-  let previousY = 0;
+          object.geometry =
+            newGeometry;
 
 
-  renderer.domElement.addEventListener(
+          currentShape =
+            type;
+
+        }
+      );
+
+    }
+  );
+
+
+// ============================================================
+// POINTER ROTATION
+// ============================================================
+
+let isDragging =
+  false;
+
+let previousX = 0;
+let previousY = 0;
+
+
+renderer.domElement
+  .addEventListener(
     "pointerdown",
     event => {
 
-      isDragging = true;
+      isDragging =
+        true;
 
       previousX =
         event.clientX;
@@ -577,15 +778,23 @@
       previousY =
         event.clientY;
 
+      renderer.domElement
+        .setPointerCapture(
+          event.pointerId
+        );
+
     }
   );
 
 
-  renderer.domElement.addEventListener(
+renderer.domElement
+  .addEventListener(
     "pointermove",
     event => {
 
-      if (!isDragging) return;
+      if (
+        !isDragging
+      ) return;
 
 
       const deltaX =
@@ -614,66 +823,237 @@
   );
 
 
-  renderer.domElement.addEventListener(
+renderer.domElement
+  .addEventListener(
     "pointerup",
-    () => {
+    event => {
 
-      isDragging = false;
+      isDragging =
+        false;
 
-    }
-  );
-
-
-  renderer.domElement.addEventListener(
-    "pointercancel",
-    () => {
-
-      isDragging = false;
+      renderer.domElement
+        .releasePointerCapture(
+          event.pointerId
+        );
 
     }
   );
 
 
-  // ============================================================
-  // RESIZE
-  // ============================================================
+// ============================================================
+// PINCH ZOOM
+// ============================================================
 
-  window.addEventListener(
-    "resize",
-    () => {
+const activePointers =
+  new Map();
 
-      camera.aspect =
-        window.innerWidth /
-        window.innerHeight;
 
-      camera.updateProjectionMatrix();
+let pinchDistance = null;
 
-      renderer.setSize(
-        window.innerWidth,
-        window.innerHeight
+
+renderer.domElement
+  .addEventListener(
+    "pointerdown",
+    event => {
+
+      activePointers.set(
+        event.pointerId,
+        {
+          x: event.clientX,
+          y: event.clientY
+        }
       );
 
+      if (
+        activePointers.size === 2
+      ) {
+
+        const points =
+          [...activePointers.values()];
+
+        pinchDistance =
+          distance(
+            points[0],
+            points[1]
+          );
+
+        isDragging =
+          false;
+
+      }
+
     }
   );
 
 
-  // ============================================================
-  // ANIMATION
-  // ============================================================
+renderer.domElement
+  .addEventListener(
+    "pointermove",
+    event => {
 
-  function animate() {
+      if (
+        !activePointers.has(
+          event.pointerId
+        )
+      ) return;
 
-    renderer.render(
-      scene,
-      camera
+
+      activePointers.set(
+        event.pointerId,
+        {
+          x: event.clientX,
+          y: event.clientY
+        }
+      );
+
+
+      if (
+        activePointers.size !== 2
+      ) return;
+
+
+      const points =
+        [...activePointers.values()];
+
+
+      const newDistance =
+        distance(
+          points[0],
+          points[1]
+        );
+
+
+      if (
+        pinchDistance !== null
+      ) {
+
+        const delta =
+          newDistance -
+          pinchDistance;
+
+
+        camera.position.z -=
+          delta * 0.01;
+
+
+        camera.position.z =
+          THREE.MathUtils.clamp(
+            camera.position.z,
+            2,
+            8
+          );
+
+      }
+
+
+      pinchDistance =
+        newDistance;
+
+    }
+  );
+
+
+function distance(
+  a,
+  b
+) {
+
+  const dx =
+    a.x - b.x;
+
+  const dy =
+    a.y - b.y;
+
+  return Math.sqrt(
+    dx * dx +
+    dy * dy
+  );
+
+}
+
+
+renderer.domElement
+  .addEventListener(
+    "pointerup",
+    event => {
+
+      activePointers.delete(
+        event.pointerId
+      );
+
+      if (
+        activePointers.size < 2
+      ) {
+
+        pinchDistance =
+          null;
+
+      }
+
+    }
+  );
+
+
+renderer.domElement
+  .addEventListener(
+    "pointercancel",
+    event => {
+
+      activePointers.delete(
+        event.pointerId
+      );
+
+      pinchDistance =
+        null;
+
+    }
+  );
+
+
+// ============================================================
+// RESIZE
+// ============================================================
+
+window.addEventListener(
+  "resize",
+  () => {
+
+    camera.aspect =
+      window.innerWidth /
+      window.innerHeight;
+
+    camera.updateProjectionMatrix();
+
+    renderer.setSize(
+      window.innerWidth,
+      window.innerHeight
     );
 
   }
+);
 
 
-  renderer.setAnimationLoop(
-    animate
+// ============================================================
+// ANIMATION
+// ============================================================
+
+function animate() {
+
+  time += 0.025;
+
+  deformBlob();
+
+  renderer.render(
+    scene,
+    camera
   );
+
+}
+
+
+renderer.setAnimationLoop(
+  animate
+);
 
 </script>
 
