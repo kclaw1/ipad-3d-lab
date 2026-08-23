@@ -47,8 +47,10 @@
 
   document.body.appendChild(renderer.domElement);
 
-  // 4. CUBE
-  const geometry = new THREE.BoxGeometry();
+  // 4. CUBE / Geometry
+  
+  // const geometry = new THREE.BoxGeometry();
+  const geometry = new THREE.SphereGeometry(1, 64, 64);
 
   //const material = new THREE.MeshStandardMaterial({
   // color: 0x8b5cf6,
