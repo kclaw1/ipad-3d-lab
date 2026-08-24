@@ -1,419 +1,436 @@
-
 <!DOCTYPE html>
 <html>
 <head>
 
-<meta name="viewport"
-      content="width=device-width,
-               initial-scale=1.0,
-               maximum-scale=1.0,
-               user-scalable=no">
+  <meta name="viewport"
+        content="width=device-width,
+                 initial-scale=1.0,
+                 maximum-scale=1.0,
+                 user-scalable=no">
 
-<title>3D Type Lab 🔤</title>
+  <title>3D Type Lab 🔤</title>
 
-<style>
+  <style>
 
-* {
-  box-sizing: border-box;
-}
+    * {
+      box-sizing: border-box;
+    }
 
-html,
-body {
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #050510;
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        sans-serif;
+    }
 
-  margin: 0;
+    #app {
+      width: 100%;
+      height: 100%;
+    }
 
-  width: 100%;
-  height: 100%;
+    canvas {
+      display: block;
+      touch-action: none;
+    }
 
-  overflow: hidden;
+    #loading {
+      position: fixed;
+      top: 18px;
+      left: 50%;
+      transform: translateX(-50%);
 
-  background: #050510;
+      padding: 9px 14px;
 
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    sans-serif;
+      background:
+        rgba(20,20,30,0.72);
 
-}
+      backdrop-filter:
+        blur(12px);
 
-#app {
+      border:
+        1px solid
+        rgba(255,255,255,0.12);
 
-  width: 100%;
-  height: 100%;
+      border-radius: 14px;
 
-}
+      color: white;
 
-canvas {
+      font-size: 12px;
 
-  display: block;
+      z-index: 20;
 
-  touch-action: none;
+      transition:
+        opacity 0.3s;
+    }
 
-}
+    #controls {
 
-#controls {
+      position: fixed;
 
-  position: fixed;
+      left: 14px;
+      right: 14px;
+      bottom: 14px;
 
-  left: 14px;
-  right: 14px;
-  bottom: 14px;
+      max-height: 58vh;
 
-  max-height: 58vh;
+      overflow-y: auto;
 
-  overflow-y: auto;
+      padding: 15px;
 
-  padding: 15px;
+      background:
+        rgba(20,20,28,0.78);
 
-  background:
-    rgba(20,20,28,0.78);
+      backdrop-filter:
+        blur(20px);
 
-  backdrop-filter:
-    blur(20px);
+      border:
+        1px solid
+        rgba(255,255,255,0.12);
 
-  border:
-    1px solid
-    rgba(255,255,255,0.12);
+      border-radius: 20px;
 
-  border-radius: 20px;
+      color: white;
 
-  color: white;
+      z-index: 10;
+    }
 
-  z-index: 10;
+    .row {
+      margin-bottom: 13px;
+    }
 
-}
+    .row:last-child {
+      margin-bottom: 0;
+    }
 
-.row {
+    label {
 
-  margin-bottom: 13px;
+      display: flex;
 
-}
+      justify-content:
+        space-between;
 
-.row:last-child {
+      margin-bottom: 6px;
 
-  margin-bottom: 0;
+      font-size: 13px;
+    }
 
-}
+    input[type="range"] {
+      width: 100%;
+    }
 
-label {
+    input[type="text"] {
 
-  display: flex;
+      width: 100%;
 
-  justify-content: space-between;
+      padding: 11px;
 
-  margin-bottom: 6px;
+      border: none;
 
-  font-size: 13px;
+      border-radius: 11px;
 
-}
+      background:
+        rgba(255,255,255,0.1);
 
-input[type="range"] {
+      color: white;
 
-  width: 100%;
+      font-size: 16px;
 
-}
+      outline: none;
+    }
 
-input[type="text"] {
+    .buttons {
 
-  width: 100%;
+      display: grid;
 
-  padding: 11px;
+      grid-template-columns:
+        repeat(4, 1fr);
 
-  border: none;
+      gap: 7px;
+    }
 
-  border-radius: 11px;
+    button {
 
-  background:
-    rgba(255,255,255,0.1);
+      border: 0;
 
-  color: white;
+      border-radius: 11px;
 
-  font-size: 16px;
+      padding: 10px 4px;
 
-  outline: none;
+      background:
+        rgba(255,255,255,0.1);
 
-}
+      color: white;
 
-.buttons {
+      font-size: 12px;
 
-  display: grid;
+      transition:
+        transform .12s,
+        background .12s;
+    }
 
-  grid-template-columns:
-    repeat(4, 1fr);
+    button:active {
 
-  gap: 7px;
+      transform: scale(.96);
 
-}
+      background:
+        rgba(255,255,255,.22);
+    }
 
-button {
+    button.active {
 
-  border: 0;
+      background:
+        rgba(255,255,255,.25);
+    }
 
-  border-radius: 11px;
+    .hint {
 
-  padding: 10px 4px;
+      text-align: center;
 
-  background:
-    rgba(255,255,255,0.1);
+      opacity: .5;
 
-  color: white;
+      font-size: 11px;
 
-  font-size: 12px;
+      margin-top: 10px;
+    }
 
-  transition:
-    transform .12s,
-    background .12s;
+  </style>
 
-}
 
-button:active {
+  <!-- =======================================================
+       THREE.JS IMPORT MAP
+       ======================================================= -->
 
-  transform: scale(.96);
+  <script type="importmap">
 
-  background:
-    rgba(255,255,255,.22);
+  {
+    "imports": {
+      "three":
+        "https://cdn.jsdelivr.net/npm/three@0.179.1/build/three.module.js",
 
-}
+      "three/addons/":
+        "https://cdn.jsdelivr.net/npm/three@0.179.1/examples/jsm/"
+    }
+  }
 
-button.active {
-
-  background:
-    rgba(255,255,255,.25);
-
-}
-
-.hint {
-
-  text-align: center;
-
-  opacity: .5;
-
-  font-size: 11px;
-
-  margin-top: 10px;
-
-}
-
-</style>
+  </script>
 
 </head>
 
+
 <body>
 
+
 <div id="app"></div>
+
+
+<div id="loading">
+  🔤 Loading Type Lab...
+</div>
 
 
 <div id="controls">
 
 
-<!-- TEXT -->
+  <!-- TEXT -->
 
-<div class="row">
+  <div class="row">
 
-<label>
+    <label>
+      <span>Text 🔤</span>
+    </label>
 
-<span>Text 🔤</span>
+    <input
+      id="textInput"
+      type="text"
+      value="HELLO"
+      maxlength="18">
 
-</label>
+  </div>
 
-<input
-  id="textInput"
-  type="text"
-  value="HELLO"
-  maxlength="18">
 
-</div>
+  <!-- DEPTH -->
 
+  <div class="row">
 
-<!-- DEPTH -->
+    <label>
 
-<div class="row">
+      <span>Depth</span>
 
-<label>
+      <span id="depthValue">
+        0.35
+      </span>
 
-<span>Depth</span>
+    </label>
 
-<span id="depthValue">
-0.35
-</span>
+    <input
+      id="depth"
+      type="range"
+      min="0.05"
+      max="1"
+      step="0.01"
+      value="0.35">
 
-</label>
+  </div>
 
-<input
-  id="depth"
-  type="range"
-  min="0.05"
-  max="1"
-  step="0.01"
-  value="0.35">
 
-</div>
+  <!-- BEVEL -->
 
+  <div class="row">
 
-<!-- BEVEL -->
+    <label>
 
-<div class="row">
+      <span>Roundness 🫧</span>
 
-<label>
+      <span id="bevelValue">
+        0.08
+      </span>
 
-<span>Roundness 🫧</span>
+    </label>
 
-<span id="bevelValue">
-0.08
-</span>
+    <input
+      id="bevel"
+      type="range"
+      min="0"
+      max="0.25"
+      step="0.01"
+      value="0.08">
 
-</label>
+  </div>
 
-<input
-  id="bevel"
-  type="range"
-  min="0"
-  max="0.25"
-  step="0.01"
-  value="0.08">
 
-</div>
+  <!-- ROUGHNESS -->
 
+  <div class="row">
 
-<!-- ROUGHNESS -->
+    <label>
 
-<div class="row">
+      <span>Roughness</span>
 
-<label>
+      <span id="roughnessValue">
+        0.25
+      </span>
 
-<span>Roughness</span>
+    </label>
 
-<span id="roughnessValue">
-0.25
-</span>
+    <input
+      id="roughness"
+      type="range"
+      min="0"
+      max="1"
+      step="0.01"
+      value="0.25">
 
-</label>
+  </div>
 
-<input
-  id="roughness"
-  type="range"
-  min="0"
-  max="1"
-  step="0.01"
-  value="0.25">
 
-</div>
+  <!-- METALNESS -->
 
+  <div class="row">
 
-<!-- METALNESS -->
+    <label>
 
-<div class="row">
+      <span>Metalness</span>
 
-<label>
+      <span id="metalnessValue">
+        0.35
+      </span>
 
-<span>Metalness</span>
+    </label>
 
-<span id="metalnessValue">
-0.35
-</span>
+    <input
+      id="metalness"
+      type="range"
+      min="0"
+      max="1"
+      step="0.01"
+      value="0.35">
 
-</label>
+  </div>
 
-<input
-  id="metalness"
-  type="range"
-  min="0"
-  max="1"
-  step="0.01"
-  value="0.35">
 
-</div>
+  <!-- COLOR -->
 
+  <div class="row">
 
-<!-- COLOR -->
+    <button id="colorButton">
+      🎨 Change Color
+    </button>
 
-<div class="row">
+  </div>
 
-<button id="colorButton">
 
-🎨 Change Color
+  <!-- CAMERA -->
 
-</button>
+  <div class="row">
 
-</div>
+    <label>
+      <span>Camera 🎥</span>
+    </label>
 
+    <div class="buttons">
 
-<!-- CAMERA -->
+      <button
+        data-camera="object">
+        Object
+      </button>
 
-<div class="row">
+      <button
+        data-camera="orbit">
+        Orbit
+      </button>
 
-<label>
+      <button
+        data-camera="cinematic"
+        class="active">
+        Cinema
+      </button>
 
-<span>Camera 🎥</span>
+      <button
+        data-camera="parallax">
+        Float
+      </button>
 
-</label>
+    </div>
 
+  </div>
 
-<div class="buttons">
 
-<button
-  data-camera="object">
+  <div class="hint">
 
-Object
+    👆 Drag = rotate
+    &nbsp; • &nbsp;
+    🤏 Pinch = zoom
 
-</button>
+  </div>
 
-<button
-  data-camera="orbit">
-
-Orbit
-
-</button>
-
-<button
-  data-camera="cinematic"
-  class="active">
-
-Cinema
-
-</button>
-
-<button
-  data-camera="parallax">
-
-Float
-
-</button>
-
-</div>
-
-</div>
-
-
-<div class="hint">
-
-👆 Drag = rotate
-&nbsp; • &nbsp;
-🤏 Pinch = zoom
-
-</div>
 
 </div>
 
 
 <script type="module">
 
-
-import * as THREE from
-"https://cdn.jsdelivr.net/npm/three@0.179.1/build/three.module.js";
+import * as THREE
+  from "three";
 
 import {
   FontLoader
 } from
-"https://cdn.jsdelivr.net/npm/three@0.179.1/examples/jsm/loaders/FontLoader.js";
+  "three/addons/loaders/FontLoader.js";
 
 import {
   TextGeometry
 } from
-"https://cdn.jsdelivr.net/npm/three@0.179.1/examples/jsm/geometries/TextGeometry.js";
+  "three/addons/geometries/TextGeometry.js";
+
 
 // ============================================================
-// SCENE
+// BASIC SCENE
 // ============================================================
 
 const scene =
@@ -428,7 +445,7 @@ scene.fog =
   new THREE.Fog(
     0x080820,
     4,
-    12
+    13
   );
 
 
@@ -477,18 +494,18 @@ let targetCameraY = 0;
 const renderer =
   new THREE.WebGLRenderer({
 
-    antialias: true
+    antialias: true,
+
+    powerPreference:
+      "high-performance"
 
   });
 
 renderer.setPixelRatio(
 
   Math.min(
-
     window.devicePixelRatio,
-
     2
-
   )
 
 );
@@ -504,7 +521,8 @@ renderer.setSize(
 renderer.outputColorSpace =
   THREE.SRGBColorSpace;
 
-renderer.domElement.style.touchAction =
+renderer.domElement
+  .style.touchAction =
   "none";
 
 document
@@ -588,23 +606,21 @@ for (
 
   const phi =
     Math.acos(
-      2 *
-      Math.random()
-      - 1
+      2 * Math.random() - 1
     );
 
   starPositions.push(
 
     radius *
-    Math.sin(phi) *
-    Math.cos(theta),
+      Math.sin(phi) *
+      Math.cos(theta),
 
     radius *
-    Math.sin(phi) *
-    Math.sin(theta),
+      Math.sin(phi) *
+      Math.sin(theta),
 
     radius *
-    Math.cos(phi)
+      Math.cos(phi)
 
   );
 
@@ -615,11 +631,8 @@ starGeometry.setAttribute(
   "position",
 
   new THREE.Float32BufferAttribute(
-
     starPositions,
-
     3
-
   )
 
 );
@@ -669,26 +682,73 @@ const material =
 
 
 // ============================================================
-// FONT
+// TEXT STATE
 // ============================================================
-
-const loader =
-  new FontLoader();
 
 let font = null;
 
 let textMesh = null;
 
+let textDepth = 0.35;
+
+let textBevel = 0.08;
+
 
 // ============================================================
-// TEXT SETTINGS
+// FONT LOADING
 // ============================================================
 
-let textDepth =
-  0.35;
+const fontLoader =
+  new FontLoader();
 
-let textBevel =
-  0.08;
+const loading =
+  document
+    .getElementById(
+      "loading"
+    );
+
+
+fontLoader.load(
+
+  "https://cdn.jsdelivr.net/npm/three@0.179.1/examples/fonts/helvetiker_bold.typeface.json",
+
+  function (loadedFont) {
+
+    font =
+      loadedFont;
+
+    loading.textContent =
+      "✨ Type Lab ready";
+
+    setTimeout(
+      () => {
+
+        loading.style.opacity =
+          "0";
+
+      },
+      800
+    );
+
+    createText();
+
+  },
+
+  undefined,
+
+  function (error) {
+
+    console.error(
+      "Font loading failed:",
+      error
+    );
+
+    loading.textContent =
+      "❌ Font failed to load";
+
+  }
+
+);
 
 
 // ============================================================
@@ -700,12 +760,15 @@ function createText() {
   if (!font) return;
 
 
-  const text =
+  const input =
     document
       .getElementById(
         "textInput"
-      )
-      .value
+      );
+
+
+  const text =
+    input.value
       .trim()
       .toUpperCase();
 
@@ -720,31 +783,102 @@ function createText() {
 
       {
 
-        font: font,
+        font:
 
-        size: 1,
+          font,
 
-        depth: textDepth,
+        size:
 
-        curveSegments: 12,
+          1,
+
+        depth:
+
+          textDepth,
+
+        curveSegments:
+
+          12,
 
         bevelEnabled:
+
           textBevel > 0,
 
         bevelThickness:
+
           textBevel,
 
         bevelSize:
+
           textBevel,
 
-        bevelSegments: 5
+        bevelOffset:
+
+          0,
+
+        bevelSegments:
+
+          5
 
       }
 
     );
 
 
-  geometry.center();
+  geometry.computeBoundingBox();
+
+
+  // ----------------------------------------------------------
+  // CENTER TEXT
+  // ----------------------------------------------------------
+
+  const box =
+    geometry.boundingBox;
+
+
+  const width =
+    box.max.x -
+    box.min.x;
+
+  const height =
+    box.max.y -
+    box.min.y;
+
+
+  const centerX =
+    (box.max.x +
+     box.min.x) / 2;
+
+
+  const centerY =
+    (box.max.y +
+     box.min.y) / 2;
+
+
+  geometry.translate(
+    -centerX,
+    -centerY,
+    -textDepth / 2
+  );
+
+
+  // ----------------------------------------------------------
+  // FIT TEXT TO SCREEN
+  // ----------------------------------------------------------
+
+  const maxWidth =
+    3.6;
+
+  let scale =
+    1;
+
+
+  if (width > maxWidth) {
+
+    scale =
+      maxWidth /
+      width;
+
+  }
 
 
   if (textMesh) {
@@ -769,6 +903,11 @@ function createText() {
     );
 
 
+  textMesh.scale.setScalar(
+    scale
+  );
+
+
   scene.add(
     textMesh
   );
@@ -777,39 +916,7 @@ function createText() {
 
 
 // ============================================================
-// LOAD FONT
-// ============================================================
-
-loader.load(
-
-  "https://cdn.jsdelivr.net/npm/three@0.179.1/examples/fonts/helvetiker_regular.typeface.json",
-
-  loadedFont => {
-
-    console.log("🎉 Font loaded!");
-
-    font = loadedFont;
-
-    createText();
-
-  },
-
-  undefined,
-
-  error => {
-
-    console.error(
-      "❌ Font failed to load:",
-      error
-    );
-
-  }
-
-);
-
-
-// ============================================================
-// INPUT TEXT
+// TEXT INPUT
 // ============================================================
 
 document
@@ -820,11 +927,7 @@ document
 
     "input",
 
-    () => {
-
-      createText();
-
-    }
+    createText
 
   );
 
@@ -1084,7 +1187,7 @@ document
 
 
 // ============================================================
-// TOUCH
+// POINTER STATE
 // ============================================================
 
 const activePointers =
@@ -1132,8 +1235,7 @@ renderer.domElement
 
 
       if (
-        activePointers.size
-        === 1
+        activePointers.size === 1
       ) {
 
         previousX =
@@ -1146,14 +1248,12 @@ renderer.domElement
 
 
       if (
-        activePointers.size
-        === 2
+        activePointers.size === 2
       ) {
 
         const points =
           [
-            ...activePointers
-              .values()
+            ...activePointers.values()
           ];
 
 
@@ -1161,7 +1261,6 @@ renderer.domElement
           distance(
 
             points[0],
-
             points[1]
 
           );
@@ -1185,10 +1284,9 @@ renderer.domElement
     event => {
 
       if (
-        !activePointers
-          .has(
-            event.pointerId
-          )
+        !activePointers.has(
+          event.pointerId
+        )
       ) return;
 
 
@@ -1209,19 +1307,17 @@ renderer.domElement
       );
 
 
-      // --------------------------
+      // -------------------------------------------------------
       // PINCH
-      // --------------------------
+      // -------------------------------------------------------
 
       if (
-        activePointers.size
-        === 2
+        activePointers.size === 2
       ) {
 
         const points =
           [
-            ...activePointers
-              .values()
+            ...activePointers.values()
           ];
 
 
@@ -1229,20 +1325,17 @@ renderer.domElement
           distance(
 
             points[0],
-
             points[1]
 
           );
 
 
         if (
-          pinchDistance
-          !== null
+          pinchDistance !== null
         ) {
 
           const delta =
-            newDistance
-            -
+            newDistance -
             pinchDistance;
 
 
@@ -1273,25 +1366,21 @@ renderer.domElement
       }
 
 
-      // --------------------------
-      // DRAG
-      // --------------------------
+      // -------------------------------------------------------
+      // SINGLE FINGER
+      // -------------------------------------------------------
 
       const deltaX =
-        event.clientX
-        -
+        event.clientX -
         previousX;
 
-
       const deltaY =
-        event.clientY
-        -
+        event.clientY -
         previousY;
 
 
       if (
-        cameraMode
-        === "object"
+        cameraMode === "object"
       ) {
 
         if (textMesh) {
@@ -1308,8 +1397,7 @@ renderer.domElement
 
 
       if (
-        cameraMode
-        === "orbit"
+        cameraMode === "orbit"
       ) {
 
         cameraYaw +=
@@ -1334,8 +1422,7 @@ renderer.domElement
 
 
       if (
-        cameraMode
-        === "parallax"
+        cameraMode === "parallax"
       ) {
 
         targetCameraX +=
@@ -1394,15 +1481,12 @@ renderer.domElement
     event => {
 
       activePointers.delete(
-
         event.pointerId
-
       );
 
 
       if (
-        activePointers.size
-        < 2
+        activePointers.size < 2
       ) {
 
         pinchDistance =
@@ -1427,9 +1511,7 @@ renderer.domElement
     event => {
 
       activePointers.delete(
-
         event.pointerId
-
       );
 
       pinchDistance =
@@ -1509,9 +1591,9 @@ function animate() {
   time += 0.025;
 
 
-  // --------------------------
+  // ----------------------------------------------------------
   // SUBTLE BREATHING
-  // --------------------------
+  // ----------------------------------------------------------
 
   if (textMesh) {
 
@@ -1519,16 +1601,26 @@ function animate() {
       1 +
       Math.sin(
         time * 1.5
-      )
-      * 0.012;
+      ) *
+      0.012;
 
 
-    textMesh.scale.set(
+    // Preserve the fit scale.
 
-      pulse,
+    const currentScale =
+      textMesh.userData
+        .baseScale ||
+      1;
 
-      pulse,
 
+    textMesh.userData
+      .baseScale =
+      currentScale;
+
+
+    textMesh.scale.setScalar(
+
+      currentScale *
       pulse
 
     );
@@ -1536,21 +1628,20 @@ function animate() {
   }
 
 
-  // --------------------------
+  // ----------------------------------------------------------
   // STARS
-  // --------------------------
+  // ----------------------------------------------------------
 
   stars.rotation.y +=
     0.0003;
 
 
-  // --------------------------
-  // CAMERA
-  // --------------------------
+  // ----------------------------------------------------------
+  // OBJECT CAMERA
+  // ----------------------------------------------------------
 
   if (
-    cameraMode
-    === "object"
+    cameraMode === "object"
   ) {
 
     camera.position.x +=
@@ -1585,13 +1676,12 @@ function animate() {
   }
 
 
-  // --------------------------
-  // ORBIT
-  // --------------------------
+  // ----------------------------------------------------------
+  // ORBIT CAMERA
+  // ----------------------------------------------------------
 
   if (
-    cameraMode
-    === "orbit"
+    cameraMode === "orbit"
   ) {
 
     const radius =
@@ -1642,13 +1732,12 @@ function animate() {
   }
 
 
-  // --------------------------
-  // CINEMA
-  // --------------------------
+  // ----------------------------------------------------------
+  // CINEMATIC CAMERA
+  // ----------------------------------------------------------
 
   if (
-    cameraMode
-    === "cinematic"
+    cameraMode === "cinematic"
   ) {
 
     camera.position.x =
@@ -1686,13 +1775,12 @@ function animate() {
   }
 
 
-  // --------------------------
-  // FLOAT
-  // --------------------------
+  // ----------------------------------------------------------
+  // FLOAT CAMERA
+  // ----------------------------------------------------------
 
   if (
-    cameraMode
-    === "parallax"
+    cameraMode === "parallax"
   ) {
 
     camera.position.x +=
@@ -1730,6 +1818,10 @@ function animate() {
 
   }
 
+
+  // ----------------------------------------------------------
+  // RENDER
+  // ----------------------------------------------------------
 
   renderer.render(
     scene,
