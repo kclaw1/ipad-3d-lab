@@ -1,1868 +1,211 @@
 <!DOCTYPE html>
 <html>
 <head>
-
-  <meta name="viewport"
-        content="width=device-width,
-                 initial-scale=1.0,
-                 maximum-scale=1.0,
-                 user-scalable=no">
-
-  <title>3D Type Lab 🔤</title>
-
-  <style>
-
-    * {
-      box-sizing: border-box;
-    }
-
-    html,
-    body {
-      margin: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background: #050510;
-      font-family:
-        -apple-system,
-        BlinkMacSystemFont,
-        sans-serif;
-    }
-
-    #app {
-      width: 100%;
-      height: 100%;
-    }
-
-    canvas {
-      display: block;
-      touch-action: none;
-    }
-
-    #loading {
-      position: fixed;
-      top: 18px;
-      left: 50%;
-      transform: translateX(-50%);
-
-      padding: 9px 14px;
-
-      background:
-        rgba(20,20,30,0.72);
-
-      backdrop-filter:
-        blur(12px);
-
-      border:
-        1px solid
-        rgba(255,255,255,0.12);
-
-      border-radius: 14px;
-
-      color: white;
-
-      font-size: 12px;
-
-      z-index: 20;
-
-      transition:
-        opacity 0.3s;
-    }
-
-    #controls {
-
-      position: fixed;
-
-      left: 14px;
-      right: 14px;
-      bottom: 14px;
-
-      max-height: 58vh;
-
-      overflow-y: auto;
-
-      padding: 15px;
-
-      background:
-        rgba(20,20,28,0.78);
-
-      backdrop-filter:
-        blur(20px);
-
-      border:
-        1px solid
-        rgba(255,255,255,0.12);
-
-      border-radius: 20px;
-
-      color: white;
-
-      z-index: 10;
-    }
-
-    .row {
-      margin-bottom: 13px;
-    }
-
-    .row:last-child {
-      margin-bottom: 0;
-    }
-
-    label {
-
-      display: flex;
-
-      justify-content:
-        space-between;
-
-      margin-bottom: 6px;
-
-      font-size: 13px;
-    }
-
-    input[type="range"] {
-      width: 100%;
-    }
-
-    input[type="text"] {
-
-      width: 100%;
-
-      padding: 11px;
-
-      border: none;
-
-      border-radius: 11px;
-
-      background:
-        rgba(255,255,255,0.1);
-
-      color: white;
-
-      font-size: 16px;
-
-      outline: none;
-    }
-
-    .buttons {
-
-      display: grid;
-
-      grid-template-columns:
-        repeat(4, 1fr);
-
-      gap: 7px;
-    }
-
-    button {
-
-      border: 0;
-
-      border-radius: 11px;
-
-      padding: 10px 4px;
-
-      background:
-        rgba(255,255,255,0.1);
-
-      color: white;
-
-      font-size: 12px;
-
-      transition:
-        transform .12s,
-        background .12s;
-    }
-
-    button:active {
-
-      transform: scale(.96);
-
-      background:
-        rgba(255,255,255,.22);
-    }
-
-    button.active {
-
-      background:
-        rgba(255,255,255,.25);
-    }
-
-    .hint {
-
-      text-align: center;
-
-      opacity: .5;
-
-      font-size: 11px;
-
-      margin-top: 10px;
-    }
-
-  </style>
-
-
-  <!-- =======================================================
-       THREE.JS IMPORT MAP
-       ======================================================= -->
-
-  <script type="importmap">
-
-  {
-    "imports": {
-      "three":
-        "https://cdn.jsdelivr.net/npm/three@0.179.1/build/three.module.js",
-
-      "three/addons/":
-        "https://cdn.jsdelivr.net/npm/three@0.179.1/examples/jsm/"
-    }
-  }
-
-  </script>
-
-</head>
-
-
-<body>
-
-
-<div id="app"></div>
-
-
-<div id="loading">
-  🔤 Loading Type Lab...
-</div>
-
-
-<div id="controls">
-
-
-  <!-- TEXT -->
-
-  <div class="row">
-
-    <label>
-      <span>Text 🔤</span>
-    </label>
-
-    <input
-      id="textInput"
-      type="text"
-      value="HELLO"
-      maxlength="18">
-
-  </div>
-
-
-  <!-- DEPTH -->
-
-  <div class="row">
-
-    <label>
-
-      <span>Depth</span>
-
-      <span id="depthValue">
-        0.35
-      </span>
-
-    </label>
-
-    <input
-      id="depth"
-      type="range"
-      min="0.05"
-      max="1"
-      step="0.01"
-      value="0.35">
-
-  </div>
-
-
-  <!-- BEVEL -->
-
-  <div class="row">
-
-    <label>
-
-      <span>Roundness 🫧</span>
-
-      <span id="bevelValue">
-        0.08
-      </span>
-
-    </label>
-
-    <input
-      id="bevel"
-      type="range"
-      min="0"
-      max="0.25"
-      step="0.01"
-      value="0.08">
-
-  </div>
-
-
-  <!-- ROUGHNESS -->
-
-  <div class="row">
-
-    <label>
-
-      <span>Roughness</span>
-
-      <span id="roughnessValue">
-        0.25
-      </span>
-
-    </label>
-
-    <input
-      id="roughness"
-      type="range"
-      min="0"
-      max="1"
-      step="0.01"
-      value="0.25">
-
-  </div>
-
-
-  <!-- METALNESS -->
-
-  <div class="row">
-
-    <label>
-
-      <span>Metalness</span>
-
-      <span id="metalnessValue">
-        0.35
-      </span>
-
-    </label>
-
-    <input
-      id="metalness"
-      type="range"
-      min="0"
-      max="1"
-      step="0.01"
-      value="0.35">
-
-  </div>
-
-
-  <!-- COLOR -->
-
-  <div class="row">
-
-    <button id="colorButton">
-      🎨 Change Color
-    </button>
-
-  </div>
-
-
-  <!-- CAMERA -->
-
-  <div class="row">
-
-    <label>
-      <span>Camera 🎥</span>
-    </label>
-
-    <div class="buttons">
-
-      <button
-        data-camera="object">
-        Object
-      </button>
-
-      <button
-        data-camera="orbit">
-        Orbit
-      </button>
-
-      <button
-        data-camera="cinematic"
-        class="active">
-        Cinema
-      </button>
-
-      <button
-        data-camera="parallax">
-        Float
-      </button>
-
-    </div>
-
-  </div>
-
-
-  <div class="hint">
-
-    👆 Drag = rotate
-    &nbsp; • &nbsp;
-    🤏 Pinch = zoom
-
-  </div>
-
-
-</div>
-
-
-<script type="module">
-
-import * as THREE
-  from "three";
-
-import {
-  FontLoader
-} from
-  "three/addons/loaders/FontLoader.js";
-
-import {
-  TextGeometry
-} from
-  "three/addons/geometries/TextGeometry.js";
-
-
-// ============================================================
-// BASIC SCENE
-// ============================================================
-
-const scene =
-  new THREE.Scene();
-
-scene.background =
-  new THREE.Color(
-    0x050510
-  );
-
-scene.fog =
-  new THREE.Fog(
-    0x080820,
-    4,
-    13
-  );
-
-
-// ============================================================
-// CAMERA
-// ============================================================
-
-const camera =
-  new THREE.PerspectiveCamera(
-
-    45,
-
-    window.innerWidth /
-    window.innerHeight,
-
-    0.1,
-
-    100
-
-  );
-
-let cameraDistance = 5;
-
-camera.position.set(
-  0,
-  0,
-  cameraDistance
-);
-
-let cameraMode =
-  "cinematic";
-
-let cameraYaw = 0;
-
-let cameraPitch = 0;
-
-let targetCameraX = 0;
-
-let targetCameraY = 0;
-
-
-// ============================================================
-// RENDERER
-// ============================================================
-
-const renderer =
-  new THREE.WebGLRenderer({
-
-    antialias: true,
-
-    powerPreference:
-      "high-performance"
-
-  });
-
-renderer.setPixelRatio(
-
-  Math.min(
-    window.devicePixelRatio,
-    2
-  )
-
-);
-
-renderer.setSize(
-
-  window.innerWidth,
-
-  window.innerHeight
-
-);
-
-renderer.outputColorSpace =
-  THREE.SRGBColorSpace;
-
-renderer.domElement
-  .style.touchAction =
-  "none";
-
-document
-  .getElementById("app")
-  .appendChild(
-    renderer.domElement
-  );
-
-
-// ============================================================
-// LIGHTING
-// ============================================================
-
-const ambientLight =
-  new THREE.AmbientLight(
-    0xffffff,
-    1.5
-  );
-
-scene.add(
-  ambientLight
-);
-
-
-const keyLight =
-  new THREE.DirectionalLight(
-    0xffffff,
-    4
-  );
-
-keyLight.position.set(
-  3,
-  4,
-  5
-);
-
-scene.add(
-  keyLight
-);
-
-
-const fillLight =
-  new THREE.DirectionalLight(
-    0x6688ff,
-    2
-  );
-
-fillLight.position.set(
-  -4,
-  -2,
-  3
-);
-
-scene.add(
-  fillLight
-);
-
-// ============================================================
-// STARS ✨
-// ============================================================
-
-const starGeometry =
-  new THREE.BufferGeometry();
-
-const starPositions = [];
-
-for (let i = 0; i < 900; i++) {
-
-  // Put stars in a large shell
-  // safely behind the camera range.
-
-  const radius =
-    12 + Math.random() * 12;
-
-  const theta =
-    Math.random() *
-    Math.PI * 2;
-
-  const phi =
-    Math.acos(
-      2 * Math.random() - 1
-    );
-
-  starPositions.push(
-
-    radius *
-      Math.sin(phi) *
-      Math.cos(theta),
-
-    radius *
-      Math.sin(phi) *
-      Math.sin(theta),
-
-    radius *
-      Math.cos(phi)
-
-  );
-
-}
-
-starGeometry.setAttribute(
-
-  "position",
-
-  new THREE.Float32BufferAttribute(
-    starPositions,
-    3
-  )
-
-);
-
-const stars =
-  new THREE.Points(
-
-    starGeometry,
-
-    new THREE.PointsMaterial({
-
-      color: 0xffffff,
-
-      size: 0.045,
-
-      sizeAttenuation: true,
-
-      transparent: true,
-
-      opacity: 0.75,
-
-      depthWrite: false
-
-    })
-
-  );
-
-scene.add(stars);
-// ============================================================
-// MATERIAL
-// ============================================================
-
-const material =
-  new THREE.MeshStandardMaterial({
-
-    color: 0xff66cc,
-
-    metalness: 0.35,
-
-    roughness: 0.25
-
-  });
-
-
-// ============================================================
-// TEXT STATE
-// ============================================================
-
-let font = null;
-
-let textMesh = null;
-
-let textDepth = 0.35;
-
-let textBevel = 0.08;
-
-
-// ============================================================
-// FONT LOADING
-// ============================================================
-
-const fontLoader =
-  new FontLoader();
-
-const loading =
-  document
-    .getElementById(
-      "loading"
-    );
-
-
-fontLoader.load(
-
-  "https://cdn.jsdelivr.net/npm/three@0.179.1/examples/fonts/helvetiker_bold.typeface.json",
-
-  function (loadedFont) {
-
-    font =
-      loadedFont;
-
-    loading.textContent =
-      "✨ Type Lab ready";
-
-    setTimeout(
-      () => {
-
-        loading.style.opacity =
-          "0";
-
-      },
-      800
-    );
-
-    createText();
-
-  },
-
-  undefined,
-
-  function (error) {
-
-    console.error(
-      "Font loading failed:",
-      error
-    );
-
-    loading.textContent =
-      "❌ Font failed to load";
-
-  }
-
-);
-
-
-// ============================================================
-// CREATE TEXT
-// ============================================================
-
-function createText() {
-
-  if (!font) return;
-
-
-  const input =
-    document
-      .getElementById(
-        "textInput"
-      );
-
-
-  const text =
-    input.value
-      .trim()
-      .toUpperCase();
-
-
-  if (!text) return;
-
-
-  const geometry =
-    new TextGeometry(
-
-      text,
-
-      {
-
-        font:
-
-          font,
-
-        size:
-
-          1,
-
-        depth:
-
-          textDepth,
-
-        curveSegments:
-
-          12,
-
-        bevelEnabled:
-
-          textBevel > 0,
-
-        bevelThickness:
-
-          textBevel,
-
-        bevelSize:
-
-          textBevel,
-
-        bevelOffset:
-
-          0,
-
-        bevelSegments:
-
-          5
-
-      }
-
-    );
-
-
-  geometry.computeBoundingBox();
-
-
-  // ----------------------------------------------------------
-  // CENTER TEXT
-  // ----------------------------------------------------------
-
-  const box =
-    geometry.boundingBox;
-
-
-  const width =
-    box.max.x -
-    box.min.x;
-
-  const height =
-    box.max.y -
-    box.min.y;
-
-
-  const centerX =
-    (box.max.x +
-     box.min.x) / 2;
-
-
-  const centerY =
-    (box.max.y +
-     box.min.y) / 2;
-
-
-  geometry.translate(
-    -centerX,
-    -centerY,
-    -textDepth / 2
-  );
-
-
-  // ----------------------------------------------------------
-  // FIT TEXT TO SCREEN
-  // ----------------------------------------------------------
-
-  const maxWidth =
-    3.6;
-
-  let scale =
-    1;
-
-
-  if (width > maxWidth) {
-
-    scale =
-      maxWidth /
-      width;
-
-  }
-
-
-  if (textMesh) {
-
-    scene.remove(
-      textMesh
-    );
-
-    textMesh.geometry
-      .dispose();
-
-  }
-
-
-  textMesh =
-    new THREE.Mesh(
-
-      geometry,
-
-      material
-
-    );
-
-
-  textMesh.scale.setScalar(
-    scale
-  );
-
-
-  scene.add(
-    textMesh
-  );
-
-}
-
-
-// ============================================================
-// TEXT INPUT
-// ============================================================
-
-document
-  .getElementById(
-    "textInput"
-  )
-  .addEventListener(
-
-    "input",
-
-    createText
-
-  );
-
-
-// ============================================================
-// DEPTH
-// ============================================================
-
-const depthSlider =
-  document.getElementById(
-    "depth"
-  );
-
-const depthValue =
-  document.getElementById(
-    "depthValue"
-  );
-
-
-depthSlider.addEventListener(
-
-  "input",
-
-  () => {
-
-    textDepth =
-      Number(
-        depthSlider.value
-      );
-
-    depthValue.textContent =
-      textDepth.toFixed(2);
-
-    createText();
-
-  }
-
-);
-
-
-// ============================================================
-// BEVEL
-// ============================================================
-
-const bevelSlider =
-  document.getElementById(
-    "bevel"
-  );
-
-const bevelValue =
-  document.getElementById(
-    "bevelValue"
-  );
-
-
-bevelSlider.addEventListener(
-
-  "input",
-
-  () => {
-
-    textBevel =
-      Number(
-        bevelSlider.value
-      );
-
-    bevelValue.textContent =
-      textBevel.toFixed(2);
-
-    createText();
-
-  }
-
-);
-
-
-// ============================================================
-// ROUGHNESS
-// ============================================================
-
-const roughnessSlider =
-  document.getElementById(
-    "roughness"
-  );
-
-const roughnessValue =
-  document.getElementById(
-    "roughnessValue"
-  );
-
-
-roughnessSlider.addEventListener(
-
-  "input",
-
-  () => {
-
-    const value =
-      Number(
-        roughnessSlider.value
-      );
-
-    material.roughness =
-      value;
-
-    roughnessValue.textContent =
-      value.toFixed(2);
-
-  }
-
-);
-
-
-// ============================================================
-// METALNESS
-// ============================================================
-
-const metalnessSlider =
-  document.getElementById(
-    "metalness"
-  );
-
-const metalnessValue =
-  document.getElementById(
-    "metalnessValue"
-  );
-
-
-metalnessSlider.addEventListener(
-
-  "input",
-
-  () => {
-
-    const value =
-      Number(
-        metalnessSlider.value
-      );
-
-    material.metalness =
-      value;
-
-    metalnessValue.textContent =
-      value.toFixed(2);
-
-  }
-
-);
-
-
-// ============================================================
-// COLORS
-// ============================================================
-
-const colors = [
-
-  0xff66cc,
-
-  0x66ddff,
-
-  0x9966ff,
-
-  0xffcc66,
-
-  0x66ff99,
-
-  0xff6677,
-
-  0xffffff
-
-];
-
-let colorIndex = 0;
-
-
-document
-  .getElementById(
-    "colorButton"
-  )
-  .addEventListener(
-
-    "click",
-
-    () => {
-
-      colorIndex =
-
-        (
-          colorIndex + 1
-        )
-        %
-        colors.length;
-
-
-      material.color.setHex(
-
-        colors[
-          colorIndex
-        ]
-
-      );
-
-    }
-
-  );
-
-
-// ============================================================
-// CAMERA BUTTONS
-// ============================================================
-
-document
-  .querySelectorAll(
-    "[data-camera]"
-  )
-  .forEach(
-
-    button => {
-
-      button.addEventListener(
-
-        "click",
-
-        () => {
-
-          cameraMode =
-            button.dataset.camera;
-
-
-          document
-            .querySelectorAll(
-              "[data-camera]"
-            )
-            .forEach(
-
-              b =>
-                b.classList
-                  .remove(
-                    "active"
-                  )
-
-            );
-
-
-          button.classList
-            .add(
-              "active"
-            );
-
-        }
-
-      );
-
-    }
-
-  );
-
-
-// ============================================================
-// POINTER STATE
-// ============================================================
-
-const activePointers =
-  new Map();
-
-let previousX = 0;
-
-let previousY = 0;
-
-let pinchDistance = null;
-
-
-// ============================================================
-// POINTER DOWN
-// ============================================================
-
-renderer.domElement
-  .addEventListener(
-
-    "pointerdown",
-
-    event => {
-
-      activePointers.set(
-
-        event.pointerId,
-
-        {
-
-          x:
-            event.clientX,
-
-          y:
-            event.clientY
-
-        }
-
-      );
-
-
-      renderer.domElement
-        .setPointerCapture(
-          event.pointerId
-        );
-
-
-      if (
-        activePointers.size === 1
-      ) {
-
-        previousX =
-          event.clientX;
-
-        previousY =
-          event.clientY;
-
-      }
-
-
-      if (
-        activePointers.size === 2
-      ) {
-
-        const points =
-          [
-            ...activePointers.values()
-          ];
-
-
-        pinchDistance =
-          distance(
-
-            points[0],
-            points[1]
-
-          );
-
-      }
-
-    }
-
-  );
-
-
-// ============================================================
-// POINTER MOVE
-// ============================================================
-
-renderer.domElement
-  .addEventListener(
-
-    "pointermove",
-
-    event => {
-
-      if (
-        !activePointers.has(
-          event.pointerId
-        )
-      ) return;
-
-
-      activePointers.set(
-
-        event.pointerId,
-
-        {
-
-          x:
-            event.clientX,
-
-          y:
-            event.clientY
-
-        }
-
-      );
-
-
-      // -------------------------------------------------------
-      // PINCH
-      // -------------------------------------------------------
-
-      if (
-        activePointers.size === 2
-      ) {
-
-        const points =
-          [
-            ...activePointers.values()
-          ];
-
-
-        const newDistance =
-          distance(
-
-            points[0],
-            points[1]
-
-          );
-
-
-        if (
-          pinchDistance !== null
-        ) {
-
-          const delta =
-            newDistance -
-            pinchDistance;
-
-
-          cameraDistance -=
-            delta * 0.01;
-
-
-          cameraDistance =
-            THREE.MathUtils.clamp(
-
-              cameraDistance,
-
-              2,
-
-              9
-
-            );
-
-        }
-
-
-        pinchDistance =
-          newDistance;
-
-
-        return;
-
-      }
-
-
-      // -------------------------------------------------------
-      // SINGLE FINGER
-      // -------------------------------------------------------
-
-      const deltaX =
-        event.clientX -
-        previousX;
-
-      const deltaY =
-        event.clientY -
-        previousY;
-
-
-      if (
-        cameraMode === "object"
-      ) {
-
-        if (textMesh) {
-
-          textMesh.rotation.y +=
-            deltaX * 0.01;
-
-          textMesh.rotation.x +=
-            deltaY * 0.01;
-
-        }
-
-      }
-
-
-      if (
-        cameraMode === "orbit"
-      ) {
-
-        cameraYaw +=
-          deltaX * 0.01;
-
-        cameraPitch +=
-          deltaY * 0.005;
-
-
-        cameraPitch =
-          THREE.MathUtils.clamp(
-
-            cameraPitch,
-
-            -1.2,
-
-            1.2
-
-          );
-
-      }
-
-
-      if (
-        cameraMode === "parallax"
-      ) {
-
-        targetCameraX +=
-          deltaX * 0.01;
-
-        targetCameraY -=
-          deltaY * 0.01;
-
-
-        targetCameraX =
-          THREE.MathUtils.clamp(
-
-            targetCameraX,
-
-            -1.5,
-
-            1.5
-
-          );
-
-
-        targetCameraY =
-          THREE.MathUtils.clamp(
-
-            targetCameraY,
-
-            -1,
-
-            1
-
-          );
-
-      }
-
-
-      previousX =
-        event.clientX;
-
-      previousY =
-        event.clientY;
-
-    }
-
-  );
-
-
-// ============================================================
-// POINTER UP
-// ============================================================
-
-renderer.domElement
-  .addEventListener(
-
-    "pointerup",
-
-    event => {
-
-      activePointers.delete(
-        event.pointerId
-      );
-
-
-      if (
-        activePointers.size < 2
-      ) {
-
-        pinchDistance =
-          null;
-
-      }
-
-    }
-
-  );
-
-
-// ============================================================
-// POINTER CANCEL
-// ============================================================
-
-renderer.domElement
-  .addEventListener(
-
-    "pointercancel",
-
-    event => {
-
-      activePointers.delete(
-        event.pointerId
-      );
-
-      pinchDistance =
-        null;
-
-    }
-
-  );
-
-
-// ============================================================
-// DISTANCE
-// ============================================================
-
-function distance(
-  a,
-  b
-) {
-
-  const dx =
-    a.x - b.x;
-
-  const dy =
-    a.y - b.y;
-
-  return Math.sqrt(
-
-    dx * dx +
-    dy * dy
-
-  );
-
-}
-
-
-// ============================================================
-// RESIZE
-// ============================================================
-
-window.addEventListener(
-
-  "resize",
-
-  () => {
-
-    camera.aspect =
-
-      window.innerWidth /
-      window.innerHeight;
-
-
-    camera.updateProjectionMatrix();
-
-
-    renderer.setSize(
-
-      window.innerWidth,
-
-      window.innerHeight
-
-    );
-
-  }
-
-);
-
-
-// ============================================================
-// ANIMATION
-// ============================================================
-
-let time = 0;
-
-
-// ============================================================
-// ANIMATION 🎥
-// ============================================================
-
-let time = 0;
-
-
-function animate() {
-
-  time += 0.025;
-
-
-  // ==========================================================
-  // WORD BREATHING
-  // ==========================================================
-
-  if (textMesh) {
-
-    const pulse =
-      1 +
-      Math.sin(time * 1.5)
-      * 0.012;
-
-    const baseScale =
-      textMesh.userData.baseScale || 1;
-
-    textMesh.userData.baseScale =
-      baseScale;
-
-    textMesh.scale.setScalar(
-      baseScale * pulse
-    );
-
-  }
-
-
-  // ==========================================================
-  // STAR MOTION
-  // ==========================================================
-
-  stars.rotation.y += 0.0005;
-
-  stars.rotation.x += 0.0001;
-
-
-  // ==========================================================
-  // 🎬 CINEMATIC CAMERA
-  // ==========================================================
-
-  if (
-    cameraMode === "cinematic"
-  ) {
-
-    // Big slow horizontal sweep
-
-    const cinematicX =
-      Math.sin(
-        time * 0.45
-      ) * 1.4;
-
-
-    // Gentle vertical movement
-
-    const cinematicY =
-      Math.sin(
-        time * 0.3
-      ) * 0.65;
-
-
-    // Slow push in / pull out
-
-    const cinematicZ =
-      cameraDistance
-      +
-      Math.sin(
-        time * 0.22
-      ) * 0.8;
-
-
-    // Smooth movement
-
-    camera.position.x +=
-      (
-        cinematicX -
-        camera.position.x
-      ) * 0.035;
-
-
-    camera.position.y +=
-      (
-        cinematicY -
-        camera.position.y
-      ) * 0.035;
-
-
-    camera.position.z +=
-      (
-        cinematicZ -
-        camera.position.z
-      ) * 0.035;
-
-
-    // Look slightly ABOVE center
-    // to create a more cinematic angle.
-
-    camera.lookAt(
-      0,
-      0.15,
-      0
-    );
-
-  }
-
-
-  // ==========================================================
-  // 🌊 FLOAT CAMERA
-  // ==========================================================
-
-  if (
-    cameraMode === "parallax"
-  ) {
-
-    const floatX =
-      targetCameraX * 2.2;
-
-    const floatY =
-      targetCameraY * 1.6;
-
-
-    camera.position.x +=
-      (
-        floatX -
-        camera.position.x
-      ) * 0.08;
-
-
-    camera.position.y +=
-      (
-        floatY -
-        camera.position.y
-      ) * 0.08;
-
-
-    camera.position.z +=
-      (
-        cameraDistance -
-        camera.position.z
-      ) * 0.08;
-
-
-    // Tiny automatic movement
-
-    camera.position.x +=
-      Math.sin(
-        time * 0.8
-      ) * 0.004;
-
-
-    camera.position.y +=
-      Math.cos(
-        time * 0.6
-      ) * 0.004;
-
-
-    camera.lookAt(
-      0,
-      0,
-      0
-    );
-
-  }
-
-
-  // ==========================================================
-  // 🪐 ORBIT CAMERA
-  // ==========================================================
-
-  if (
-    cameraMode === "orbit"
-  ) {
-
-    const radius =
-      cameraDistance;
-
-
-    camera.position.x =
-
-      Math.sin(
-        cameraYaw
-      )
-      *
-      Math.cos(
-        cameraPitch
-      )
-      *
-      radius;
-
-
-    camera.position.y =
-
-      Math.sin(
-        cameraPitch
-      )
-      *
-      radius;
-
-
-    camera.position.z =
-
-      Math.cos(
-        cameraYaw
-      )
-      *
-      Math.cos(
-        cameraPitch
-      )
-      *
-      radius;
-
-
-    camera.lookAt(
-      0,
-      0,
-      0
-    );
-
-  }
-
-
-  // ==========================================================
-  // 🎯 OBJECT CAMERA
-  // ==========================================================
-
-  if (
-    cameraMode === "object"
-  ) {
-
-    camera.position.x +=
-      (
-        0 -
-        camera.position.x
-      ) * 0.08;
-
-
-    camera.position.y +=
-      (
-        0 -
-        camera.position.y
-      ) * 0.08;
-
-
-    camera.position.z +=
-      (
-        cameraDistance -
-        camera.position.z
-      ) * 0.08;
-
-
-    camera.lookAt(
-      0,
-      0,
-      0
-    );
-
-  }
-
-
-  // ==========================================================
-  // RENDER
-  // ==========================================================
-
-  renderer.render(
-    scene,
-    camera
-  );
-
-}
-
-
-renderer.setAnimationLoop(
-  animate
-);
-
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>3D Type Lab 🔤</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#050510;font-family:-apple-system,BlinkMacSystemFont,sans-serif}#app{width:100%;height:100%}canvas{display:block;touch-action:none}#loading{position:fixed;top:18px;left:50%;transform:translateX(-50%);padding:9px 14px;background:rgba(20,20,30,.72);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.12);border-radius:14px;color:white;font-size:12px;z-index:20;transition:opacity .3s}#controls{position:fixed;left:14px;right:14px;bottom:14px;max-height:58vh;overflow-y:auto;padding:15px;background:rgba(20,20,28,.78);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.12);border-radius:20px;color:white;z-index:10}.row{margin-bottom:13px}.row:last-child{margin-bottom:0}label{display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px}input[type=range]{width:100%}input[type=text]{width:100%;padding:11px;border:0;border-radius:11px;background:rgba(255,255,255,.1);color:white;font-size:16px;outline:none}.buttons{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}button{border:0;border-radius:11px;padding:10px 4px;background:rgba(255,255,255,.1);color:white;font-size:12px}button:active{transform:scale(.96);background:rgba(255,255,255,.22)}button.active{background:rgba(255,255,255,.25)}.hint{text-align:center;opacity:.5;font-size:11px;margin-top:10px}
+</style>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.179.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.179.1/examples/jsm/"}}
 </script>
+</head>
+<body>
+<div id="app"></div>
+<div id="loading">🔤 Loading Type Lab...</div>
+<div id="controls">
+<div class="row"><label><span>Text 🔤</span></label><input id="textInput" type="text" value="HELLO" maxlength="18"></div>
+<div class="row"><label><span>Depth</span><span id="depthValue">0.35</span></label><input id="depth" type="range" min="0.05" max="1" step="0.01" value="0.35"></div>
+<div class="row"><label><span>Roundness 🫧</span><span id="bevelValue">0.08</span></label><input id="bevel" type="range" min="0" max="0.25" step="0.01" value="0.08"></div>
+<div class="row"><label><span>Roughness</span><span id="roughnessValue">0.25</span></label><input id="roughness" type="range" min="0" max="1" step="0.01" value="0.25"></div>
+<div class="row"><label><span>Metalness</span><span id="metalnessValue">0.35</span></label><input id="metalness" type="range" min="0" max="1" step="0.01" value="0.35"></div>
+<div class="row"><button id="colorButton">🎨 Change Color</button></div>
+<div class="row"><label><span>Camera 🎥</span></label><div class="buttons"><button data-camera="object">Object</button><button data-camera="orbit">Orbit</button><button data-camera="cinematic" class="active">Cinema</button><button data-camera="parallax">Float</button></div></div>
+<div class="hint">👆 Drag = rotate • 🤏 Pinch = zoom</div>
+</div>
+<script type="module">
+import * as THREE from "three";
+import {FontLoader} from "three/addons/loaders/FontLoader.js";
+import {TextGeometry} from "three/addons/geometries/TextGeometry.js";
 
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x050510);
+scene.fog=new THREE.Fog(0x080820,4,14);
+
+const camera=new THREE.PerspectiveCamera(45,innerWidth/innerHeight,.1,100);
+let cameraDistance=5;
+let cameraMode="cinematic";
+let cameraYaw=0;
+let cameraPitch=0;
+let targetCameraX=0;
+let targetCameraY=0;
+camera.position.set(0,0,cameraDistance);
+
+const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:"high-performance"});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(innerWidth,innerHeight);
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.domElement.style.touchAction="none";
+document.getElementById("app").appendChild(renderer.domElement);
+
+scene.add(new THREE.AmbientLight(0xffffff,1.5));
+const key=new THREE.DirectionalLight(0xffffff,4);key.position.set(3,4,5);scene.add(key);
+const fill=new THREE.DirectionalLight(0x6688ff,2);fill.position.set(-4,-2,3);scene.add(fill);
+
+// Stars stay safely outside the camera's working range.
+const starGeometry=new THREE.BufferGeometry();
+const starPositions=[];
+for(let i=0;i<900;i++){
+  const r=12+Math.random()*12;
+  const theta=Math.random()*Math.PI*2;
+  const phi=Math.acos(2*Math.random()-1);
+  starPositions.push(r*Math.sin(phi)*Math.cos(theta),r*Math.sin(phi)*Math.sin(theta),r*Math.cos(phi));
+}
+starGeometry.setAttribute("position",new THREE.Float32BufferAttribute(starPositions,3));
+const stars=new THREE.Points(starGeometry,new THREE.PointsMaterial({color:0xffffff,size:.045,sizeAttenuation:true,transparent:true,opacity:.75,depthWrite:false}));
+scene.add(stars);
+
+const material=new THREE.MeshStandardMaterial({color:0xff66cc,metalness:.35,roughness:.25});
+let font=null;
+let textMesh=null;
+let textDepth=.35;
+let textBevel=.08;
+let time=0;
+
+const loading=document.getElementById("loading");
+const fontLoader=new FontLoader();
+fontLoader.load("https://cdn.jsdelivr.net/npm/three@0.179.1/examples/fonts/helvetiker_bold.typeface.json",loaded=>{
+  font=loaded;
+  loading.textContent="✨ Type Lab ready";
+  setTimeout(()=>loading.style.opacity="0",800);
+  createText();
+},undefined,error=>{
+  console.error("Font loading failed:",error);
+  loading.textContent="❌ Font failed to load";
+});
+
+function createText(){
+  if(!font)return;
+  const text=document.getElementById("textInput").value.trim().toUpperCase();
+  if(!text)return;
+  const geometry=new TextGeometry(text,{font,size:1,depth:textDepth,curveSegments:12,bevelEnabled:textBevel>0,bevelThickness:textBevel,bevelSize:textBevel,bevelOffset:0,bevelSegments:5});
+  geometry.computeBoundingBox();
+  const box=geometry.boundingBox;
+  const width=box.max.x-box.min.x;
+  geometry.translate(-(box.max.x+box.min.x)/2,-(box.max.y+box.min.y)/2,-textDepth/2);
+  const scale=Math.min(1,3.6/width);
+  if(textMesh){scene.remove(textMesh);textMesh.geometry.dispose();}
+  textMesh=new THREE.Mesh(geometry,material);
+  textMesh.userData.baseScale=scale;
+  textMesh.scale.setScalar(scale);
+  scene.add(textMesh);
+}
+
+document.getElementById("textInput").addEventListener("input",createText);
+
+const depth=document.getElementById("depth"),depthValue=document.getElementById("depthValue");
+depth.addEventListener("input",()=>{textDepth=Number(depth.value);depthValue.textContent=textDepth.toFixed(2);createText();});
+const bevel=document.getElementById("bevel"),bevelValue=document.getElementById("bevelValue");
+bevel.addEventListener("input",()=>{textBevel=Number(bevel.value);bevelValue.textContent=textBevel.toFixed(2);createText();});
+const roughness=document.getElementById("roughness"),roughnessValue=document.getElementById("roughnessValue");
+roughness.addEventListener("input",()=>{material.roughness=Number(roughness.value);roughnessValue.textContent=Number(roughness.value).toFixed(2);});
+const metalness=document.getElementById("metalness"),metalnessValue=document.getElementById("metalnessValue");
+metalness.addEventListener("input",()=>{material.metalness=Number(metalness.value);metalnessValue.textContent=Number(metalness.value).toFixed(2);});
+
+const colors=[0xff66cc,0x66ddff,0x9966ff,0xffcc66,0x66ff99,0xff6677,0xffffff];
+let colorIndex=0;
+document.getElementById("colorButton").addEventListener("click",()=>{colorIndex=(colorIndex+1)%colors.length;material.color.setHex(colors[colorIndex]);});
+
+document.querySelectorAll("[data-camera]").forEach(button=>button.addEventListener("click",()=>{
+  cameraMode=button.dataset.camera;
+  document.querySelectorAll("[data-camera]").forEach(b=>b.classList.remove("active"));
+  button.classList.add("active");
+  // Reset the interactive camera target when switching modes.
+  if(cameraMode!=="parallax"){targetCameraX=0;targetCameraY=0;}
+}));
+
+const activePointers=new Map();
+let pinchDistance=null;
+let previousX=0;
+let previousY=0;
+function distance(a,b){return Math.hypot(a.x-b.x,a.y-b.y);}
+
+renderer.domElement.addEventListener("pointerdown",e=>{
+  activePointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  renderer.domElement.setPointerCapture(e.pointerId);
+  if(activePointers.size===1){previousX=e.clientX;previousY=e.clientY;}
+  if(activePointers.size===2){const p=[...activePointers.values()];pinchDistance=distance(p[0],p[1]);}
+});
+
+renderer.domElement.addEventListener("pointermove",e=>{
+  if(!activePointers.has(e.pointerId))return;
+  activePointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(activePointers.size===2){
+    const p=[...activePointers.values()];
+    const d=distance(p[0],p[1]);
+    if(pinchDistance!==null)cameraDistance=THREE.MathUtils.clamp(cameraDistance-(d-pinchDistance)*.01,2,9);
+    pinchDistance=d;
+    return;
+  }
+  const dx=e.clientX-previousX;
+  const dy=e.clientY-previousY;
+  if(cameraMode==="object"&&textMesh){textMesh.rotation.y+=dx*.01;textMesh.rotation.x+=dy*.01;}
+  if(cameraMode==="orbit"){cameraYaw+=dx*.01;cameraPitch=THREE.MathUtils.clamp(cameraPitch+dy*.005,-1.2,1.2);}
+  if(cameraMode==="parallax"){
+    targetCameraX=THREE.MathUtils.clamp(targetCameraX+dx*.018,-1.2,1.2);
+    targetCameraY=THREE.MathUtils.clamp(targetCameraY-dy*.018,-.8,.8);
+  }
+  previousX=e.clientX;previousY=e.clientY;
+});
+
+function endPointer(e){activePointers.delete(e.pointerId);if(activePointers.size<2)pinchDistance=null;}
+renderer.domElement.addEventListener("pointerup",endPointer);
+renderer.domElement.addEventListener("pointercancel",endPointer);
+
+addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+
+function animate(){
+  time+=.025;
+  if(textMesh){const base=textMesh.userData.baseScale||1;textMesh.scale.setScalar(base*(1+Math.sin(time*1.5)*.012));}
+  stars.rotation.y+=.00035;
+
+  if(cameraMode==="cinematic"){
+    const desiredX=Math.sin(time*.45)*1.35;
+    const desiredY=Math.sin(time*.31)*.6;
+    const desiredZ=cameraDistance+Math.sin(time*.22)*.75;
+    camera.position.x+=(desiredX-camera.position.x)*.035;
+    camera.position.y+=(desiredY-camera.position.y)*.035;
+    camera.position.z+=(desiredZ-camera.position.z)*.035;
+    camera.lookAt(0,.12,0);
+  }
+
+  if(cameraMode==="parallax"){
+    const desiredX=targetCameraX*2.2;
+    const desiredY=targetCameraY*1.6;
+    camera.position.x+=(desiredX-camera.position.x)*.08;
+    camera.position.y+=(desiredY-camera.position.y)*.08;
+    camera.position.z+=(cameraDistance-camera.position.z)*.08;
+    camera.lookAt(0,0,0);
+  }
+
+  if(cameraMode==="orbit"){
+    const r=cameraDistance;
+    camera.position.x=Math.sin(cameraYaw)*Math.cos(cameraPitch)*r;
+    camera.position.y=Math.sin(cameraPitch)*r;
+    camera.position.z=Math.cos(cameraYaw)*Math.cos(cameraPitch)*r;
+    camera.lookAt(0,0,0);
+  }
+
+  if(cameraMode==="object"){
+    camera.position.x+=(0-camera.position.x)*.08;
+    camera.position.y+=(0-camera.position.y)*.08;
+    camera.position.z+=(cameraDistance-camera.position.z)*.08;
+    camera.lookAt(0,0,0);
+  }
+
+  renderer.render(scene,camera);
+}
+renderer.setAnimationLoop(animate);
+</script>
 </body>
 </html>
