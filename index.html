@@ -11,16 +11,19 @@ void main(){vec2 uv=gl_FragCoord.xy/uResolution;uv.y=1.-uv.y;vec2 p=uv-.5;p.x*=u
 float n=fbm(vec2(cos(a)*4.0+sin(a)*2.0+t*.10,sin(a)*4.0-cos(a)*1.6-t*.075));float n2=fbm(p*5.5+vec2(-t*.12,t*.08));
 float edge=1.00+.075*sin(a*3.0+t*.55)+.045*sin(a*7.0-t*.32)+.025*sin(a*15.0+t*.21)+(.12*n-.06);float d=r-edge;
 float core=exp(-pow(d/.035,2.));float aura=exp(-pow(d/.13,2.));float mist=exp(-pow((d+.02)/.30,2.))*(.35+.65*n2);
-float stream=sin(a*13.0-t*1.35+n*7.0)+sin(a*23.0+t*.8-n2*8.0);stream=pow(max(0.,stream*.28+.45),7.0)*aura;
-float stream2=pow(max(0.,sin(a*5.0+t*.55+n*5.)),9.0)*exp(-pow((d-.01)/.10,2.));
-float tendrils=(stream+stream2)*(.45+.55*n2);
+// The primary motion is tangential: a bright head travels around the orbit, with a fading tail behind it.
+float headSpeed=.48;float headA=t*headSpeed;float angularDelta=mod(a-headA+6.2831853,6.2831853);float trailLen=1.65;float trail=exp(-angularDelta*2.25)*(1.0-smoothstep(trailLen,trailLen+.35,angularDelta));float head=exp(-pow(angularDelta/.105,2.));
+// A second, softer delayed echo makes the field feel like energy flowing through time rather than a single dot.
+float echoA=headA-1.15;float echoDelta=mod(a-echoA+6.2831853,6.2831853);float echo=exp(-pow(echoDelta/.20,2.))*.34;
+float filamentNoise=.55+.45*fbm(vec2(a*9.0-t*.35,r*7.0+t*.12));float orbitalEnergy=(head*1.9+trail*1.15+echo)*filamentNoise;
+float wisps=pow(max(0.,sin(a*13.0-t*.55+n*6.0)),8.0)*aura*.30;
 vec2 q=p-uRippleAt;float rq=length(q);float wave=sin(rq*55.-t*8.)*exp(-rq*10.)*uRipple;float ripple=wave*exp(-pow(d/.15,2.));
-float breath=.94+.10*sin(t*.7)+.035*sin(t*.31);float energy=(core*1.8+aura*.62+mist*.45+tendrils*1.4+ripple*.9)*breath*(1.+uOpen*.12);
-vec3 bg=vec3(.027,.068,.115)+vec3(.012,.032,.055)*smoothstep(.9,.05,r);vec3 cyan=vec3(.25,.78,1.);vec3 ice=vec3(.72,.96,1.);vec3 col=bg+cyan*energy+ice*(core*.18+tendrils*.10);float alpha=clamp(energy*1.18,0.,1.)*smoothstep(1.55,.22,r);gl_FragColor=vec4(col,alpha);}`});
+float breath=.94+.10*sin(t*.7)+.035*sin(t*.31);float energy=(core*1.05+aura*.32+mist*.28+wisps+orbitalEnergy*1.35+ripple*.9)*breath*(1.+uOpen*.12);
+vec3 bg=vec3(.027,.068,.115)+vec3(.012,.032,.055)*smoothstep(.9,.05,r);vec3 cyan=vec3(.25,.78,1.);vec3 ice=vec3(.72,.96,1.);vec3 col=bg+cyan*energy+ice*(core*.12+orbitalEnergy*.22);float alpha=clamp(energy*1.18,0.,1.)*smoothstep(1.55,.22,r);gl_FragColor=vec4(col,alpha);}`});
 const quad=new THREE.Mesh(new THREE.PlaneGeometry(2,2),material);scene.add(quad);
 const count=40,pos=new Float32Array(count*3),sizes=new Float32Array(count);for(let i=0;i<count;i++){let a=Math.random()*6.283,r=.72+Math.random()*.52;pos[i*3]=Math.cos(a)*r;pos[i*3+1]=Math.sin(a)*r;pos[i*3+2]=0;sizes[i]=.5+Math.random()*1.8}const sg=new THREE.BufferGeometry();sg.setAttribute('position',new THREE.BufferAttribute(pos,3));sg.setAttribute('size',new THREE.BufferAttribute(sizes,1));const sm=new THREE.ShaderMaterial({transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,uniforms:{uTime:{value:0}},vertexShader:`attribute float size;varying float vA;uniform float uTime;void main(){vec3 p=position;p.xy*=1.+.025*sin(uTime*.5+position.x*4.);vA=.3+.4*sin(uTime*.7+position.y*8.);gl_Position=projectionMatrix*modelViewMatrix*vec4(p,1.);gl_PointSize=size*2.4;}`,fragmentShader:`varying float vA;void main(){float d=length(gl_PointCoord-.5);gl_FragColor=vec4(.65,.92,1.,smoothstep(.5,0.,d)*vA);}`});const sparks=new THREE.Points(sg,sm);scene.add(sparks);
 let ripple=0,open=0,downY=0,lastY=0,drag=false;const hint=document.querySelector('#hint');function triggerRipple(x=.5,y=.5){material.uniforms.uRippleAt.value.set(x,y);ripple=1;hint.classList.add('hidden')}
 renderer.domElement.addEventListener('pointerdown',e=>{downY=lastY=e.clientY;drag=true;triggerRipple(e.clientX/innerWidth,1-e.clientY/innerHeight)});renderer.domElement.addEventListener('pointermove',e=>{if(!drag)return;let dy=lastY-e.clientY;if(Math.abs(e.clientY-downY)>5){open=THREE.MathUtils.clamp(open+dy*.003,0,1);material.uniforms.uOpen.value=open;hint.classList.add('hidden')}lastY=e.clientY});renderer.domElement.addEventListener('pointerup',()=>drag=false);renderer.domElement.addEventListener('pointercancel',()=>drag=false);
-addEventListener('wheel',e=>{open=THREE.MathUtils.clamp(open+Math.abs(e.deltaY)*.002,0,1);material.uniforms.uOpen.value=open;hint.classList.add('hidden')},{passive:true});addEventListener('resize',()=>{renderer.setSize(innerWidth,innerHeight);material.uniforms.uResolution.value.set(innerWidth,innerHeight)});
+addEventListener('wheel',e=>{open=THREE.MathUtils.clamp(open+Math.abs(e.deltaY)*.002,0,1);material.uniforms.uOpen.value=open;material.uniforms.uOpen.value=open;hint.classList.add('hidden')},{passive:true});addEventListener('resize',()=>{renderer.setSize(innerWidth,innerHeight);material.uniforms.uResolution.value.set(innerWidth,innerHeight)});
 const clock=new THREE.Clock();function animate(){let t=clock.getElapsedTime();material.uniforms.uTime.value=t;material.uniforms.uRipple.value=ripple;ripple*=.94;quad.scale.setScalar(1+open*.24);sparks.rotation.z=t*.008;renderer.render(scene,camera)}renderer.setAnimationLoop(animate);
 </script></body></html>
