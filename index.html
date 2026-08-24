@@ -177,6 +177,33 @@
 
   </div>
 
+  <div class="row">
+
+  <label>
+    <span>Camera</span>
+  </label>
+
+  <div class="buttons">
+
+    <button data-camera="object">
+      Object
+    </button>
+
+    <button data-camera="orbit">
+      Orbit
+    </button>
+
+    <button data-camera="cinematic">
+      Cinema
+    </button>
+
+    <button data-camera="parallax">
+      Float
+    </button>
+
+  </div>
+
+</div>
 
   <!-- GEOMETRY -->
 
@@ -247,6 +274,14 @@ const camera =
   );
 
 camera.position.z = 4;
+
+  let cameraMode = "cinematic";
+
+let cameraYaw = 0;
+let cameraPitch = 0;
+
+let targetCameraX = 0;
+let targetCameraY = 0;
 
 
 // ============================================================
@@ -752,6 +787,23 @@ document
     }
   );
 
+  //=========
+
+document
+  .querySelectorAll("[data-camera]")
+  .forEach(button => {
+
+    button.addEventListener("click", () => {
+
+      cameraMode =
+        button.dataset.camera;
+
+    });
+
+  });
+
+  
+  //=========
 
 // ============================================================
 // POINTER ROTATION
@@ -806,11 +858,26 @@ renderer.domElement
         previousY;
 
 
-      object.rotation.y +=
-        deltaX * 0.01;
+      if (cameraMode === "object") {
 
-      object.rotation.x +=
-        deltaY * 0.01;
+  object.rotation.y += deltaX * 0.01;
+  object.rotation.x += deltaY * 0.01;
+
+}
+
+if (cameraMode === "orbit") {
+
+  cameraYaw += deltaX * 0.01;
+  cameraPitch += deltaY * 0.005;
+
+}
+
+if (cameraMode === "parallax") {
+
+  targetCameraX += deltaX * 0.01;
+  targetCameraY -= deltaY * 0.01;
+
+}
 
 
       previousX =
@@ -1041,17 +1108,73 @@ function animate() {
 
   time += 0.025;
 
-
-  const radius = 4;
-
-camera.position.x =
-  Math.sin(time * 0.3) * radius;
-
-camera.position.z =
-  Math.cos(time * 0.3) * radius;
-
-camera.lookAt(0, 0, 0);
   deformBlob();
+
+
+  // ==================================
+  // CAMERA MODES
+  // ==================================
+
+  if (cameraMode === "orbit") {
+
+    const radius = camera.position.z;
+
+    camera.position.x =
+      Math.sin(cameraYaw) * radius;
+
+    camera.position.z =
+      Math.cos(cameraYaw) * radius;
+
+    camera.position.y =
+      cameraPitch * 2;
+
+    camera.lookAt(0,0,0);
+
+  }
+
+
+  if (cameraMode === "cinematic") {
+
+    camera.position.x =
+      Math.sin(time * 0.35) * 0.5;
+
+    camera.position.y =
+      Math.cos(time * 0.25) * 0.25;
+
+    camera.lookAt(0,0,0);
+
+  }
+
+
+  if (cameraMode === "parallax") {
+
+    camera.position.x +=
+      (targetCameraX - camera.position.x)
+      * 0.05;
+
+    camera.position.y +=
+      (targetCameraY - camera.position.y)
+      * 0.05;
+
+    camera.lookAt(0,0,0);
+
+  }
+
+
+  if (cameraMode === "object") {
+
+    camera.position.x +=
+      (0 - camera.position.x)
+      * 0.05;
+
+    camera.position.y +=
+      (0 - camera.position.y)
+      * 0.05;
+
+    camera.lookAt(0,0,0);
+
+  }
+
 
   renderer.render(
     scene,
