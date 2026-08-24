@@ -580,9 +580,8 @@ scene.add(
   fillLight
 );
 
-
 // ============================================================
-// STARS
+// STARS ✨
 // ============================================================
 
 const starGeometry =
@@ -590,15 +589,13 @@ const starGeometry =
 
 const starPositions = [];
 
-for (
-  let i = 0;
-  i < 700;
-  i++
-) {
+for (let i = 0; i < 900; i++) {
+
+  // Put stars in a large shell
+  // safely behind the camera range.
 
   const radius =
-    7 +
-    Math.random() * 12;
+    12 + Math.random() * 12;
 
   const theta =
     Math.random() *
@@ -646,13 +643,13 @@ const stars =
 
       color: 0xffffff,
 
-      size: 0.09,
+      size: 0.045,
 
       sizeAttenuation: true,
 
       transparent: true,
 
-      opacity: 0.9,
+      opacity: 0.75,
 
       depthWrite: false
 
@@ -660,11 +657,7 @@ const stars =
 
   );
 
-scene.add(
-  stars
-);
-
-
+scene.add(stars);
 // ============================================================
 // MATERIAL
 // ============================================================
@@ -1586,85 +1579,168 @@ window.addEventListener(
 let time = 0;
 
 
+// ============================================================
+// ANIMATION 🎥
+// ============================================================
+
+let time = 0;
+
+
 function animate() {
 
   time += 0.025;
 
 
-  // ----------------------------------------------------------
-  // SUBTLE BREATHING
-  // ----------------------------------------------------------
+  // ==========================================================
+  // WORD BREATHING
+  // ==========================================================
 
   if (textMesh) {
 
     const pulse =
       1 +
-      Math.sin(
-        time * 1.5
-      ) *
-      0.012;
+      Math.sin(time * 1.5)
+      * 0.012;
 
+    const baseScale =
+      textMesh.userData.baseScale || 1;
 
-    // Preserve the fit scale.
-
-    const currentScale =
-      textMesh.userData
-        .baseScale ||
-      1;
-
-
-    textMesh.userData
-      .baseScale =
-      currentScale;
-
+    textMesh.userData.baseScale =
+      baseScale;
 
     textMesh.scale.setScalar(
-
-      currentScale *
-      pulse
-
+      baseScale * pulse
     );
 
   }
 
 
-  // ----------------------------------------------------------
-  // STARS
-  // ----------------------------------------------------------
+  // ==========================================================
+  // STAR MOTION
+  // ==========================================================
 
-  stars.rotation.y +=
-    0.0003;
+  stars.rotation.y += 0.0005;
+
+  stars.rotation.x += 0.0001;
 
 
-  // ----------------------------------------------------------
-  // OBJECT CAMERA
-  // ----------------------------------------------------------
+  // ==========================================================
+  // 🎬 CINEMATIC CAMERA
+  // ==========================================================
 
   if (
-    cameraMode === "object"
+    cameraMode === "cinematic"
   ) {
 
-    camera.position.x +=
+    // Big slow horizontal sweep
 
-      (0 -
-       camera.position.x)
-      * 0.08;
+    const cinematicX =
+      Math.sin(
+        time * 0.45
+      ) * 1.4;
+
+
+    // Gentle vertical movement
+
+    const cinematicY =
+      Math.sin(
+        time * 0.3
+      ) * 0.65;
+
+
+    // Slow push in / pull out
+
+    const cinematicZ =
+      cameraDistance
+      +
+      Math.sin(
+        time * 0.22
+      ) * 0.8;
+
+
+    // Smooth movement
+
+    camera.position.x +=
+      (
+        cinematicX -
+        camera.position.x
+      ) * 0.035;
 
 
     camera.position.y +=
-
-      (0 -
-       camera.position.y)
-      * 0.08;
+      (
+        cinematicY -
+        camera.position.y
+      ) * 0.035;
 
 
     camera.position.z +=
+      (
+        cinematicZ -
+        camera.position.z
+      ) * 0.035;
 
+
+    // Look slightly ABOVE center
+    // to create a more cinematic angle.
+
+    camera.lookAt(
+      0,
+      0.15,
+      0
+    );
+
+  }
+
+
+  // ==========================================================
+  // 🌊 FLOAT CAMERA
+  // ==========================================================
+
+  if (
+    cameraMode === "parallax"
+  ) {
+
+    const floatX =
+      targetCameraX * 2.2;
+
+    const floatY =
+      targetCameraY * 1.6;
+
+
+    camera.position.x +=
+      (
+        floatX -
+        camera.position.x
+      ) * 0.08;
+
+
+    camera.position.y +=
+      (
+        floatY -
+        camera.position.y
+      ) * 0.08;
+
+
+    camera.position.z +=
       (
         cameraDistance -
         camera.position.z
-      )
-      * 0.08;
+      ) * 0.08;
+
+
+    // Tiny automatic movement
+
+    camera.position.x +=
+      Math.sin(
+        time * 0.8
+      ) * 0.004;
+
+
+    camera.position.y +=
+      Math.cos(
+        time * 0.6
+      ) * 0.004;
 
 
     camera.lookAt(
@@ -1676,9 +1752,9 @@ function animate() {
   }
 
 
-  // ----------------------------------------------------------
-  // ORBIT CAMERA
-  // ----------------------------------------------------------
+  // ==========================================================
+  // 🪐 ORBIT CAMERA
+  // ==========================================================
 
   if (
     cameraMode === "orbit"
@@ -1732,82 +1808,33 @@ function animate() {
   }
 
 
-  // ----------------------------------------------------------
-  // CINEMATIC CAMERA
-  // ----------------------------------------------------------
+  // ==========================================================
+  // 🎯 OBJECT CAMERA
+  // ==========================================================
 
   if (
-    cameraMode === "cinematic"
-  ) {
-
-    camera.position.x =
-
-      Math.sin(
-        time * 0.35
-      )
-      * 0.7;
-
-
-    camera.position.y =
-
-      Math.cos(
-        time * 0.25
-      )
-      * 0.35;
-
-
-    camera.position.z =
-
-      cameraDistance
-      +
-      Math.sin(
-        time * 0.15
-      )
-      * 0.25;
-
-
-    camera.lookAt(
-      0,
-      0,
-      0
-    );
-
-  }
-
-
-  // ----------------------------------------------------------
-  // FLOAT CAMERA
-  // ----------------------------------------------------------
-
-  if (
-    cameraMode === "parallax"
+    cameraMode === "object"
   ) {
 
     camera.position.x +=
-
       (
-        targetCameraX -
+        0 -
         camera.position.x
-      )
-      * 0.05;
+      ) * 0.08;
 
 
     camera.position.y +=
-
       (
-        targetCameraY -
+        0 -
         camera.position.y
-      )
-      * 0.05;
+      ) * 0.08;
 
 
     camera.position.z +=
-
       (
         cameraDistance -
         camera.position.z
-      )
-      * 0.08;
+      ) * 0.08;
 
 
     camera.lookAt(
@@ -1819,9 +1846,9 @@ function animate() {
   }
 
 
-  // ----------------------------------------------------------
+  // ==========================================================
   // RENDER
-  // ----------------------------------------------------------
+  // ==========================================================
 
   renderer.render(
     scene,
