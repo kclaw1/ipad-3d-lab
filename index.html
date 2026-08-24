@@ -9,26 +9,37 @@
 </style>
 </head>
 <body>
-<div id="app"></div>
-<div class="badge"><b>CHATTY</b> · PORTAL</div>
-<div class="copy"><div class="copy-inner"><div class="eyebrow">a little doorway to somewhere curious</div><h1 class="title">Hello, wonder.</h1><p class="sub">Come a little closer.</p></div></div>
-<div class="chatty" aria-hidden="true">😁</div>
-<div class="hint" id="hint">tap the portal · scroll to enter</div>
+<div id="app"></div><div class="badge"><b>CHATTY</b> · PORTAL</div><div class="copy"><div class="copy-inner"><div class="eyebrow">a little doorway to somewhere curious</div><h1 class="title">Hello, wonder.</h1><p class="sub">Come a little closer.</p></div></div><div class="chatty" aria-hidden="true">😁</div><div class="hint" id="hint">tap the portal · swipe to enter</div>
 <script type="module">
 import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.179.1/build/three.module.js";
-const scene=new THREE.Scene();
-const camera=new THREE.OrthographicCamera(-1,1,1,-1,.1,10);camera.position.z=2;
-const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,powerPreference:"high-performance"});
-renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;document.querySelector('#app').appendChild(renderer.domElement);
-const quad=new THREE.PlaneGeometry(2,2);
-const material=new THREE.ShaderMaterial({transparent:true,depthWrite:false,uniforms:{uTime:{value:0},uResolution:{value:new THREE.Vector2(innerWidth,innerHeight)},uRipple:{value:0},uRippleAt:{value:new THREE.Vector2(.5,.5)},uScroll:{value:0}},vertexShader:`void main(){gl_Position=vec4(position,1.0);}`,fragmentShader:`
-precision highp float;uniform float uTime,uRipple,uScroll;uniform vec2 uResolution,uRippleAt;
-float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453123);} 
-float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.0-2.0*f);return mix(mix(hash(i),hash(i+vec2(1.,0.)),f.x),mix(hash(i+vec2(0.,1.)),hash(i+vec2(1.,1.)),f.x),f.y);} 
-float fbm(vec2 p){float v=0.;float a=.5;for(int i=0;i<5;i++){v+=a*noise(p);p=p*2.03+vec2(17.2,4.1);a*=.5;}return v;}
-void main(){vec2 uv=gl_FragCoord.xy/uResolution;uv.y=1.-uv.y;vec2 p=uv-.5;p.x*=uResolution.x/uResolution.y;float t=uTime*.055;float r=length(p);float a=atan(p.y,p.x);float breathing=1.+.018*sin(uTime*.62)+.012*sin(uTime*.31+2.);float wobble=fbm(vec2(cos(a)*3.+sin(a)*1.7+t,sin(a)*3.-cos(a)*1.3-t))*.11;float edge=.92*breathing+wobble;float ring=exp(-pow((r-edge)/.075,2.));float inner=exp(-pow((r-(edge-.10))/.19,2.));float mist=exp(-pow((r-(edge-.02))/.27,2.))*(.22+.78*fbm(p*3.1+vec2(t,-t*.7)));float wisps=pow(max(0.,sin(a*7.-uTime*.17+fbm(p*4.)*2.)),10.)*exp(-pow((r-edge)/.13,2.));vec2 q=p-uRippleAt;q.x*=uResolution.x/uResolution.y;float wave=sin(length(q)*44.-uTime*5.5)*exp(-length(q)*9.)*uRipple;float rippleMask=exp(-pow((r-edge)/.18,2.))*wave;vec3 bg=vec3(.027,.068,.115);bg+=vec3(.015,.045,.07)*smoothstep(.8,.1,r);vec3 cyan=vec3(.55,.88,1.);vec3 white=vec3(.9,.98,1.);float glow=ring*1.1+inner*.32+mist*.22+wisps*.35+rippleMask*.45;vec3 col=bg+cyan*glow+white*(ring*.28+wisps*.12);float alpha=clamp(glow*1.18,0.,1.)*smoothstep(1.5,.28,r);gl_FragColor=vec4(col,alpha);}`});
-const portal=new THREE.Mesh(quad,material);scene.add(portal);
-const count=28,pos=new Float32Array(count*3),sizes=new Float32Array(count);for(let i=0;i<count;i++){const a=Math.random()*Math.PI*2,r=.72+Math.random()*.48;pos[i*3]=Math.cos(a)*r;pos[i*3+1]=Math.sin(a)*r;pos[i*3+2]=0;sizes[i]=.5+Math.random()*1.6;}const sg=new THREE.BufferGeometry();sg.setAttribute('position',new THREE.BufferAttribute(pos,3));sg.setAttribute('size',new THREE.BufferAttribute(sizes,1));const sm=new THREE.ShaderMaterial({transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,uniforms:{uTime:{value:0}},vertexShader:`attribute float size;varying float vA;uniform float uTime;void main(){vec3 p=position;p.xy*=1.+.025*sin(uTime*.5+position.x*4.);vA=.35+.35*sin(uTime*.7+position.y*8.);gl_Position=projectionMatrix*modelViewMatrix*vec4(p,1.);gl_PointSize=size*2.2;}`,fragmentShader:`varying float vA;void main(){float d=length(gl_PointCoord-.5);float a=smoothstep(.5,0.,d)*vA;gl_FragColor=vec4(.72,.94,1.,a);}`});const sparks=new THREE.Points(sg,sm);scene.add(sparks);
-let ripple=0,scroll=0;const hint=document.querySelector('#hint');function triggerRipple(x=.5,y=.5){material.uniforms.uRippleAt.value.set(x,y);ripple=1;hint.classList.add('hidden');}renderer.domElement.addEventListener('pointerdown',e=>triggerRipple(e.clientX/innerWidth,1-e.clientY/innerHeight));addEventListener('wheel',e=>{scroll=Math.min(1,scroll+Math.abs(e.deltaY)*.0015);material.uniforms.uScroll.value=scroll;hint.classList.add('hidden')},{passive:true});addEventListener('touchmove',()=>{scroll=Math.min(1,scroll+.01);material.uniforms.uScroll.value=scroll;hint.classList.add('hidden')},{passive:true});addEventListener('resize',()=>{renderer.setSize(innerWidth,innerHeight);material.uniforms.uResolution.value.set(innerWidth,innerHeight);});const clock=new THREE.Clock();function animate(){const t=clock.getElapsedTime();material.uniforms.uTime.value=t;sm.uniforms.uTime.value=t;ripple*=.94;material.uniforms.uRipple.value=ripple;portal.scale.setScalar(1+scroll*.22);sparks.rotation.z=t*.006;renderer.render(scene,camera);}renderer.setAnimationLoop(animate);
-</script>
-</body></html>
+const scene=new THREE.Scene(),camera=new THREE.OrthographicCamera(-1,1,1,-1,.1,10);camera.position.z=2;
+const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,powerPreference:"high-performance"});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;document.querySelector('#app').appendChild(renderer.domElement);
+const material=new THREE.ShaderMaterial({transparent:true,depthWrite:false,uniforms:{uTime:{value:0},uAspect:{value:innerWidth/innerHeight},uRipple:{value:0},uRippleAt:{value:new THREE.Vector2(.5,.5)},uOpen:{value:0}},vertexShader:`void main(){gl_Position=vec4(position,1.0);}`,fragmentShader:`
+precision highp float;uniform float uTime,uAspect,uRipple,uOpen;uniform vec2 uRippleAt;
+float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hash(i),hash(i+vec2(1,0)),f.x),mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),f.x),f.y);}
+float fbm(vec2 p){float v=0.,a=.5;for(int i=0;i<6;i++){v+=a*noise(p);p=p*2.02+vec2(8.7,3.1);a*=.5;}return v;}
+void main(){vec2 uv=gl_FragCoord.xy/vec2(1.0);uv.y=1.-uv.y;vec2 p=uv-.5;p.x*=uAspect;float r=length(p),a=atan(p.y,p.x),t=uTime*.055;
+float n=fbm(vec2(cos(a)*3.8+sin(a)*1.9+t*1.3,sin(a)*3.8-cos(a)*1.5-t));
+float n2=fbm(p*5.2+vec2(-t*1.8,t*.9));
+float edge=1.00+.045*sin(a*3.+uTime*.28)+.025*sin(a*8.-uTime*.19)+(.09*n-.045)*smoothstep(.2,.9,r);
+float d=r-edge;
+float field=exp(-pow(d/.055,2.));
+float outer=exp(-pow((d-.035)/.13,2.))*(.22+.78*n2);
+float inner=exp(-pow((d+.10)/.22,2.))*(.12+.88*fbm(p*3.8+vec2(t,-t*.7)));
+float flow=pow(max(0.,sin(a*11.-uTime*.34+n*8.)),13.)*exp(-pow(d/.12,2.));
+float flow2=pow(max(0.,sin(a*5.+uTime*.18-n*6.)),18.)*exp(-pow((d+.01)/.09,2.));
+float filaments=(flow+flow2)*(.35+.65*n2);
+vec2 q=p-uRippleAt;float rq=length(q);float wave=sin(rq*48.-uTime*6.5)*exp(-rq*8.)*uRipple;float ripple=wave*exp(-pow(d/.16,2.));
+float breath=.92+.12*sin(uTime*.62)+.05*sin(uTime*.31+1.7);float energy=field*1.15+outer*.65+inner*.42+filaments*.75+ripple*.7;
+energy*=breath*(1.+uOpen*.18);
+vec3 bg=vec3(.027,.068,.115)+vec3(.012,.028,.05)*smoothstep(.9,.05,r);vec3 cyan=vec3(.38,.82,1.);vec3 ice=vec3(.88,.98,1.);vec3 col=bg+cyan*energy+ice*(field*.32+filaments*.18);
+float alpha=clamp(energy*1.05,0.,1.)*smoothstep(1.5,.25,r);gl_FragColor=vec4(col,alpha);}`});
+const quad=new THREE.Mesh(new THREE.PlaneGeometry(2,2),material);scene.add(quad);
+const count=34,pos=new Float32Array(count*3),sizes=new Float32Array(count);for(let i=0;i<count;i++){let a=Math.random()*6.283,r=.68+Math.random()*.5;pos[i*3]=Math.cos(a)*r;pos[i*3+1]=Math.sin(a)*r;pos[i*3+2]=0;sizes[i]=.55+Math.random()*1.8}const sg=new THREE.BufferGeometry();sg.setAttribute('position',new THREE.BufferAttribute(pos,3));sg.setAttribute('size',new THREE.BufferAttribute(sizes,1));const sm=new THREE.ShaderMaterial({transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,uniforms:{uTime:{value:0}},vertexShader:`attribute float size;varying float vA;uniform float uTime;void main(){vec3 p=position;p.xy*=1.+.025*sin(uTime*.5+position.x*4.);vA=.3+.4*sin(uTime*.7+position.y*8.);gl_Position=projectionMatrix*modelViewMatrix*vec4(p,1.);gl_PointSize=size*2.4;}`,fragmentShader:`varying float vA;void main(){float d=length(gl_PointCoord-.5);gl_FragColor=vec4(.72,.94,1.,smoothstep(.5,0.,d)*vA);}`});const sparks=new THREE.Points(sg,sm);scene.add(sparks);
+let ripple=0,open=0;const hint=document.querySelector('#hint');function triggerRipple(x=.5,y=.5){material.uniforms.uRippleAt.value.set(x,y);ripple=1;hint.classList.add('hidden')}
+let downY=0,lastY=0;renderer.domElement.addEventListener('pointerdown',e=>{downY=lastY=e.clientY;triggerRipple(e.clientX/innerWidth,1-e.clientY/innerHeight);});renderer.domElement.addEventListener('pointermove',e=>{if(e.buttons){let dy=lastY-e.clientY;if(Math.abs(e.clientY-downY)>8){open=THREE.MathUtils.clamp(open+dy*.002,0,1);material.uniforms.uOpen.value=open;hint.classList.add('hidden')}lastY=e.clientY;}});
+addEventListener('wheel',e=>{open=THREE.MathUtils.clamp(open+Math.abs(e.deltaY)*.0018,0,1);material.uniforms.uOpen.value=open;hint.classList.add('hidden')},{passive:true});
+addEventListener('resize',()=>{renderer.setSize(innerWidth,innerHeight);material.uniforms.uAspect.value=innerWidth/innerHeight});
+const clock=new THREE.Clock();function animate(){let t=clock.getElapsedTime();material.uniforms.uTime.value=t;sm.uniforms.uTime.value=t;ripple*=.94;material.uniforms.uRipple.value=ripple;quad.scale.setScalar(1+open*.24);sparks.rotation.z=t*.006;renderer.render(scene,camera)}renderer.setAnimationLoop(animate);
+</script></body></html>
