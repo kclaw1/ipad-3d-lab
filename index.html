@@ -16,7 +16,7 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background: #09090d;
+      background: #050510;
       font-family: -apple-system, BlinkMacSystemFont, sans-serif;
     }
 
@@ -35,6 +35,8 @@
       left: 14px;
       right: 14px;
       bottom: 14px;
+      max-height: 55vh;
+      overflow-y: auto;
 
       padding: 15px;
 
@@ -82,11 +84,17 @@
       color: white;
 
       font-size: 12px;
+      transition: transform 0.12s, background 0.12s;
     }
 
     button:active {
       transform: scale(0.96);
       background: rgba(255,255,255,0.22);
+    }
+
+    button.active {
+      background: rgba(255,255,255,0.25);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.18);
     }
 
     .hint {
@@ -177,33 +185,37 @@
 
   </div>
 
+
+  <!-- CAMERA -->
+
   <div class="row">
 
-  <label>
-    <span>Camera</span>
-  </label>
+    <label>
+      <span>Camera 🎥</span>
+    </label>
 
-  <div class="buttons">
+    <div class="buttons">
 
-    <button data-camera="object">
-      Object
-    </button>
+      <button data-camera="object">
+        Object
+      </button>
 
-    <button data-camera="orbit">
-      Orbit
-    </button>
+      <button data-camera="orbit">
+        Orbit
+      </button>
 
-    <button data-camera="cinematic">
-      Cinema
-    </button>
+      <button data-camera="cinematic" class="active">
+        Cinema
+      </button>
 
-    <button data-camera="parallax">
-      Float
-    </button>
+      <button data-camera="parallax">
+        Float
+      </button>
+
+    </div>
 
   </div>
 
-</div>
 
   <!-- GEOMETRY -->
 
@@ -227,7 +239,7 @@
         Torus
       </button>
 
-      <button data-shape="blob">
+      <button data-shape="blob" class="active">
         🫧 Blob
       </button>
 
@@ -237,7 +249,9 @@
 
 
   <div class="hint">
-    👆 Drag = rotate &nbsp; • &nbsp; 🤏 Pinch = zoom
+    👆 Drag = move camera / rotate
+    &nbsp; • &nbsp;
+    🤏 Pinch = zoom
   </div>
 
 </div>
@@ -257,7 +271,14 @@ const scene =
   new THREE.Scene();
 
 scene.background =
-  new THREE.Color(0x09090d);
+  new THREE.Color(0x050510);
+
+scene.fog =
+  new THREE.Fog(
+    0x050510,
+    4,
+    12
+  );
 
 
 // ============================================================
@@ -273,9 +294,18 @@ const camera =
     100
   );
 
-camera.position.z = 4;
+let cameraDistance = 4;
 
-  let cameraMode = "cinematic";
+camera.position.set(
+  0,
+  0,
+  cameraDistance
+);
+
+
+// Camera state
+
+let cameraMode = "cinematic";
 
 let cameraYaw = 0;
 let cameraPitch = 0;
@@ -368,6 +398,47 @@ scene.add(
 
 
 // ============================================================
+// STARS
+// ============================================================
+
+const starGeometry =
+  new THREE.BufferGeometry();
+
+const starPositions = [];
+
+for (let i = 0; i < 1200; i++) {
+
+  starPositions.push(
+    (Math.random() - 0.5) * 50,
+    (Math.random() - 0.5) * 50,
+    (Math.random() - 0.5) * 50
+  );
+
+}
+
+starGeometry.setAttribute(
+  "position",
+  new THREE.Float32BufferAttribute(
+    starPositions,
+    3
+  )
+);
+
+const stars =
+  new THREE.Points(
+    starGeometry,
+
+    new THREE.PointsMaterial({
+      size: 0.04,
+      transparent: true,
+      opacity: 0.75
+    })
+  );
+
+scene.add(stars);
+
+
+// ============================================================
 // MATERIAL
 // ============================================================
 
@@ -399,16 +470,11 @@ function createBlob() {
   const position =
     geometry.attributes.position;
 
-
-  // Save original vertices
-
   const original =
     position.array.slice();
 
-
   geometry.userData.original =
     original;
-
 
   return geometry;
 
@@ -419,9 +485,7 @@ function createBlob() {
 // GEOMETRY CREATOR
 // ============================================================
 
-function createGeometry(
-  type
-) {
+function createGeometry(type) {
 
   switch (type) {
 
@@ -486,6 +550,37 @@ scene.add(
 
 
 // ============================================================
+// GLOW HALO
+// ============================================================
+
+const glowGeometry =
+  new THREE.SphereGeometry(
+    1.7,
+    64,
+    64
+  );
+
+const glowMaterial =
+  new THREE.MeshBasicMaterial({
+
+    color: 0x9966ff,
+
+    transparent: true,
+
+    opacity: 0.08
+
+  });
+
+const glow =
+  new THREE.Mesh(
+    glowGeometry,
+    glowMaterial
+  );
+
+scene.add(glow);
+
+
+// ============================================================
 // BLOB SETTINGS
 // ============================================================
 
@@ -517,6 +612,9 @@ function deformBlob() {
       .original;
 
 
+  if (!original) return;
+
+
   for (
     let i = 0;
     i < position.count;
@@ -533,8 +631,6 @@ function deformBlob() {
       original[i * 3 + 2];
 
 
-    // Distance from center
-
     const length =
       Math.sqrt(
         x*x +
@@ -542,8 +638,6 @@ function deformBlob() {
         z*z
       );
 
-
-    // Normalized direction
 
     const nx =
       x / length;
@@ -554,8 +648,6 @@ function deformBlob() {
     const nz =
       z / length;
 
-
-    // Organic noise
 
     const wave =
       Math.sin(
@@ -582,6 +674,7 @@ function deformBlob() {
 
 
     position.setXYZ(
+
       i,
 
       nx * length * amount,
@@ -741,6 +834,10 @@ document
         colors[colorIndex]
       );
 
+      glowMaterial.color.setHex(
+        colors[colorIndex]
+      );
+
     }
   );
 
@@ -781,142 +878,97 @@ document
           currentShape =
             type;
 
+
+          document
+            .querySelectorAll(
+              "[data-shape]"
+            )
+            .forEach(
+              b => b.classList.remove(
+                "active"
+              )
+            );
+
+          button.classList.add(
+            "active"
+          );
+
         }
       );
 
     }
   );
 
-  //=========
+
+// ============================================================
+// CAMERA BUTTONS
+// ============================================================
 
 document
-  .querySelectorAll("[data-camera]")
-  .forEach(button => {
+  .querySelectorAll(
+    "[data-camera]"
+  )
+  .forEach(
+    button => {
 
-    button.addEventListener("click", () => {
+      button.addEventListener(
+        "click",
+        () => {
 
-      cameraMode =
-        button.dataset.camera;
-
-    });
-
-  });
-
-  
-  //=========
-
-// ============================================================
-// POINTER ROTATION
-// ============================================================
-
-let isDragging =
-  false;
-
-let previousX = 0;
-let previousY = 0;
+          cameraMode =
+            button.dataset.camera;
 
 
-renderer.domElement
-  .addEventListener(
-    "pointerdown",
-    event => {
-
-      isDragging =
-        true;
-
-      previousX =
-        event.clientX;
-
-      previousY =
-        event.clientY;
-
-      renderer.domElement
-        .setPointerCapture(
-          event.pointerId
-        );
-
-    }
-  );
+          document
+            .querySelectorAll(
+              "[data-camera]"
+            )
+            .forEach(
+              b => b.classList.remove(
+                "active"
+              )
+            );
 
 
-renderer.domElement
-  .addEventListener(
-    "pointermove",
-    event => {
-
-      if (
-        !isDragging
-      ) return;
+          button.classList.add(
+            "active"
+          );
 
 
-      const deltaX =
-        event.clientX -
-        previousX;
+          // Reset camera targets
 
-      const deltaY =
-        event.clientY -
-        previousY;
+          if (
+            cameraMode === "object"
+          ) {
 
+            targetCameraX = 0;
+            targetCameraY = 0;
 
-      if (cameraMode === "object") {
+          }
 
-  object.rotation.y += deltaX * 0.01;
-  object.rotation.x += deltaY * 0.01;
-
-}
-
-if (cameraMode === "orbit") {
-
-  cameraYaw += deltaX * 0.01;
-  cameraPitch += deltaY * 0.005;
-
-}
-
-if (cameraMode === "parallax") {
-
-  targetCameraX += deltaX * 0.01;
-  targetCameraY -= deltaY * 0.01;
-
-}
-
-
-      previousX =
-        event.clientX;
-
-      previousY =
-        event.clientY;
-
-    }
-  );
-
-
-renderer.domElement
-  .addEventListener(
-    "pointerup",
-    event => {
-
-      isDragging =
-        false;
-
-      renderer.domElement
-        .releasePointerCapture(
-          event.pointerId
-        );
+        }
+      );
 
     }
   );
 
 
 // ============================================================
-// PINCH ZOOM
+// TOUCH / POINTER STATE
 // ============================================================
 
 const activePointers =
   new Map();
 
+let previousX = 0;
+let previousY = 0;
 
 let pinchDistance = null;
 
+
+// ============================================================
+// POINTER DOWN
+// ============================================================
 
 renderer.domElement
   .addEventListener(
@@ -931,6 +983,26 @@ renderer.domElement
         }
       );
 
+
+      renderer.domElement
+        .setPointerCapture(
+          event.pointerId
+        );
+
+
+      if (
+        activePointers.size === 1
+      ) {
+
+        previousX =
+          event.clientX;
+
+        previousY =
+          event.clientY;
+
+      }
+
+
       if (
         activePointers.size === 2
       ) {
@@ -944,14 +1016,15 @@ renderer.domElement
             points[1]
           );
 
-        isDragging =
-          false;
-
       }
 
     }
   );
 
+
+// ============================================================
+// POINTER MOVE
+// ============================================================
 
 renderer.domElement
   .addEventListener(
@@ -974,51 +1047,193 @@ renderer.domElement
       );
 
 
-      if (
-        activePointers.size !== 2
-      ) return;
-
-
-      const points =
-        [...activePointers.values()];
-
-
-      const newDistance =
-        distance(
-          points[0],
-          points[1]
-        );
-
+      // -------------------------
+      // PINCH
+      // -------------------------
 
       if (
-        pinchDistance !== null
+        activePointers.size === 2
       ) {
 
-        const delta =
-          newDistance -
-          pinchDistance;
+        const points =
+          [...activePointers.values()];
 
 
-        camera.position.z -=
-          delta * 0.01;
+        const newDistance =
+          distance(
+            points[0],
+            points[1]
+          );
 
 
-        camera.position.z =
+        if (
+          pinchDistance !== null
+        ) {
+
+          const delta =
+            newDistance -
+            pinchDistance;
+
+
+          cameraDistance -=
+            delta * 0.01;
+
+
+          cameraDistance =
+            THREE.MathUtils.clamp(
+              cameraDistance,
+              2,
+              8
+            );
+
+        }
+
+
+        pinchDistance =
+          newDistance;
+
+
+        return;
+
+      }
+
+
+      // -------------------------
+      // SINGLE FINGER DRAG
+      // -------------------------
+
+      const deltaX =
+        event.clientX -
+        previousX;
+
+      const deltaY =
+        event.clientY -
+        previousY;
+
+
+      if (
+        cameraMode === "object"
+      ) {
+
+        object.rotation.y +=
+          deltaX * 0.01;
+
+        object.rotation.x +=
+          deltaY * 0.01;
+
+      }
+
+
+      if (
+        cameraMode === "orbit"
+      ) {
+
+        cameraYaw +=
+          deltaX * 0.01;
+
+        cameraPitch +=
+          deltaY * 0.005;
+
+
+        cameraPitch =
           THREE.MathUtils.clamp(
-            camera.position.z,
-            2,
-            8
+            cameraPitch,
+            -1.2,
+            1.2
           );
 
       }
 
 
-      pinchDistance =
-        newDistance;
+      if (
+        cameraMode === "parallax"
+      ) {
+
+        targetCameraX +=
+          deltaX * 0.01;
+
+        targetCameraY -=
+          deltaY * 0.01;
+
+
+        targetCameraX =
+          THREE.MathUtils.clamp(
+            targetCameraX,
+            -1.5,
+            1.5
+          );
+
+
+        targetCameraY =
+          THREE.MathUtils.clamp(
+            targetCameraY,
+            -1,
+            1
+          );
+
+      }
+
+
+      previousX =
+        event.clientX;
+
+      previousY =
+        event.clientY;
 
     }
   );
 
+
+// ============================================================
+// POINTER UP
+// ============================================================
+
+renderer.domElement
+  .addEventListener(
+    "pointerup",
+    event => {
+
+      activePointers.delete(
+        event.pointerId
+      );
+
+
+      if (
+        activePointers.size < 2
+      ) {
+
+        pinchDistance =
+          null;
+
+      }
+
+    }
+  );
+
+
+// ============================================================
+// POINTER CANCEL
+// ============================================================
+
+renderer.domElement
+  .addEventListener(
+    "pointercancel",
+    event => {
+
+      activePointers.delete(
+        event.pointerId
+      );
+
+      pinchDistance =
+        null;
+
+    }
+  );
+
+
+// ============================================================
+// DISTANCE
+// ============================================================
 
 function distance(
   a,
@@ -1037,44 +1252,6 @@ function distance(
   );
 
 }
-
-
-renderer.domElement
-  .addEventListener(
-    "pointerup",
-    event => {
-
-      activePointers.delete(
-        event.pointerId
-      );
-
-      if (
-        activePointers.size < 2
-      ) {
-
-        pinchDistance =
-          null;
-
-      }
-
-    }
-  );
-
-
-renderer.domElement
-  .addEventListener(
-    "pointercancel",
-    event => {
-
-      activePointers.delete(
-        event.pointerId
-      );
-
-      pinchDistance =
-        null;
-
-    }
-  );
 
 
 // ============================================================
@@ -1108,73 +1285,214 @@ function animate() {
 
   time += 0.025;
 
+
+  // -------------------------
+  // BLOB
+  // -------------------------
+
   deformBlob();
 
 
-  // ==================================
-  // CAMERA MODES
-  // ==================================
+  // -------------------------
+  // BREATHING
+  // -------------------------
 
-  if (cameraMode === "orbit") {
+  const pulse =
+    1 +
+    Math.sin(time * 2)
+    * 0.03;
 
-    const radius = camera.position.z;
-
-    camera.position.x =
-      Math.sin(cameraYaw) * radius;
-
-    camera.position.z =
-      Math.cos(cameraYaw) * radius;
-
-    camera.position.y =
-      cameraPitch * 2;
-
-    camera.lookAt(0,0,0);
-
-  }
+  object.scale.set(
+    pulse,
+    pulse,
+    pulse
+  );
 
 
-  if (cameraMode === "cinematic") {
+  // -------------------------
+  // GLOW
+  // -------------------------
 
-    camera.position.x =
-      Math.sin(time * 0.35) * 0.5;
+  glow.position.copy(
+    object.position
+  );
 
-    camera.position.y =
-      Math.cos(time * 0.25) * 0.25;
-
-    camera.lookAt(0,0,0);
-
-  }
-
-
-  if (cameraMode === "parallax") {
-
-    camera.position.x +=
-      (targetCameraX - camera.position.x)
-      * 0.05;
-
-    camera.position.y +=
-      (targetCameraY - camera.position.y)
-      * 0.05;
-
-    camera.lookAt(0,0,0);
-
-  }
+  glow.scale.setScalar(
+    1.1 +
+    Math.sin(time * 2)
+    * 0.05
+  );
 
 
-  if (cameraMode === "object") {
+  // -------------------------
+  // STARS
+  // -------------------------
+
+  stars.rotation.y +=
+    0.0003;
+
+
+  // ==========================================================
+  // CAMERA
+  // ==========================================================
+
+  if (
+    cameraMode === "object"
+  ) {
 
     camera.position.x +=
       (0 - camera.position.x)
-      * 0.05;
+      * 0.08;
 
     camera.position.y +=
       (0 - camera.position.y)
-      * 0.05;
+      * 0.08;
 
-    camera.lookAt(0,0,0);
+    camera.position.z +=
+      (
+        cameraDistance -
+        camera.position.z
+      ) * 0.08;
+
+    camera.lookAt(
+      0,
+      0,
+      0
+    );
 
   }
 
+
+  // -------------------------
+  // ORBIT
+  // -------------------------
+
+  if (
+    cameraMode === "orbit"
+  ) {
+
+    const radius =
+      cameraDistance;
+
+
+    camera.position.x =
+      Math.sin(cameraYaw)
+      *
+      Math.cos(cameraPitch)
+      *
+      radius;
+
+
+    camera.position.y =
+      Math.sin(cameraPitch)
+      *
+      radius;
+
+
+    camera.position.z =
+      Math.cos(cameraYaw)
+      *
+      Math.cos(cameraPitch)
+      *
+      radius;
+
+
+    camera.lookAt(
+      0,
+      0,
+      0
+    );
+
+  }
+
+
+  // -------------------------
+  // CINEMATIC
+  // -------------------------
+
+  if (
+    cameraMode === "cinematic"
+  ) {
+
+    camera.position.x =
+      Math.sin(
+        time * 0.35
+      )
+      * 0.7;
+
+
+    camera.position.y =
+      Math.cos(
+        time * 0.25
+      )
+      * 0.35;
+
+
+    camera.position.z =
+      cameraDistance +
+      Math.sin(
+        time * 0.15
+      )
+      * 0.25;
+
+
+    camera.lookAt(
+      0,
+      0,
+      0
+    );
+
+  }
+
+
+  // -------------------------
+  // FLOAT / PARALLAX
+  // -------------------------
+
+  if (
+    cameraMode === "parallax"
+  ) {
+
+    const desiredX =
+      targetCameraX;
+
+    const desiredY =
+      targetCameraY;
+
+
+    camera.position.x +=
+      (
+        desiredX -
+        camera.position.x
+      ) * 0.05;
+
+
+    camera.position.y +=
+      (
+        desiredY -
+        camera.position.y
+      ) * 0.05;
+
+
+    camera.position.z +=
+      (
+        cameraDistance -
+        camera.position.z
+      ) * 0.08;
+
+
+    camera.lookAt(
+      0,
+      0,
+      0
+    );
+
+  }
+
+
+  // -------------------------
+  // RENDER
+  // -------------------------
 
   renderer.render(
     scene,
