@@ -404,17 +404,13 @@ import * as THREE from
 
 import {
   FontLoader
-}
-from
+} from
 "https://cdn.jsdelivr.net/npm/three@0.179.1/examples/jsm/loaders/FontLoader.js";
-
 
 import {
   TextGeometry
-}
-from
+} from
 "https://cdn.jsdelivr.net/npm/three@0.179.1/examples/jsm/geometries/TextGeometry.js";
-
 
 // ============================================================
 // SCENE
@@ -786,14 +782,26 @@ function createText() {
 
 loader.load(
 
-  "https://cdn.jsdelivr.net/npm/three@0.179.1/examples/fonts/helvetiker_bold.typeface.json",
+  "https://cdn.jsdelivr.net/npm/three@0.179.1/examples/fonts/helvetiker_regular.typeface.json",
 
   loadedFont => {
 
-    font =
-      loadedFont;
+    console.log("🎉 Font loaded!");
+
+    font = loadedFont;
 
     createText();
+
+  },
+
+  undefined,
+
+  error => {
+
+    console.error(
+      "❌ Font failed to load:",
+      error
+    );
 
   }
 
